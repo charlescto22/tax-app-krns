@@ -9,7 +9,13 @@ interface ReceiptData {
   taxpayerName: string;
   taxType: string;
   amount: string;
-  // Add other fields as needed
+  
+  // New fields for detailed receipt
+  department?: string;
+  goodsType?: string;
+  cargoValue?: string;
+  vehicleType?: string;
+  landArea?: string;
 }
 
 interface ReceiptTemplateProps {
@@ -21,7 +27,6 @@ export const ReceiptTemplate = forwardRef<HTMLDivElement, ReceiptTemplateProps>(
 
   return (
     <div style={{ display: "none" }}>
-      {/* Ensure the ref is attached to the inner container */}
       <div ref={ref} className="print-container">
         <style>
           {`
@@ -46,6 +51,7 @@ export const ReceiptTemplate = forwardRef<HTMLDivElement, ReceiptTemplateProps>(
                 color: black;
                 background: white;
                 padding: 5px;
+                line-height: 1.2;
               }
               .header {
                 text-align: center;
@@ -68,6 +74,12 @@ export const ReceiptTemplate = forwardRef<HTMLDivElement, ReceiptTemplateProps>(
               }
               .label {
                 font-weight: bold;
+                margin-right: 5px;
+              }
+              .value {
+                text-align: right;
+                word-break: break-word;
+                max-width: 65%;
               }
               .total {
                 margin-top: 10px;
@@ -94,41 +106,86 @@ export const ReceiptTemplate = forwardRef<HTMLDivElement, ReceiptTemplateProps>(
           <div className="subtitle">Official Tax Receipt</div>
         </div>
 
+        {/* Metadata Section */}
         <div className="row">
           <span className="label">Date:</span>
-          <span>{data.date} {data.time}</span>
+          <span className="value">{data.date} {data.time}</span>
         </div>
         <div className="row">
           <span className="label">Rcpt #:</span>
-          <span>{data.receiptNumber}</span>
+          <span className="value">{data.receiptNumber}</span>
         </div>
         <div className="row">
           <span className="label">Station:</span>
-          <span>{data.station}</span>
+          <span className="value">{data.station}</span>
         </div>
         <div className="row">
           <span className="label">Collector:</span>
-          <span>{data.collector}</span>
+          <span className="value">{data.collector}</span>
         </div>
 
-        <div style={{ margin: '10px 0', borderBottom: '1px solid black' }}></div>
+        {/* Department Info (if available) */}
+        {data.department && (
+          <div className="row">
+            <span className="label">Dept:</span>
+            <span className="value" style={{ textTransform: 'capitalize' }}>{data.department}</span>
+          </div>
+        )}
 
+        <div style={{ margin: '8px 0', borderBottom: '1px solid black' }}></div>
+
+        {/* Payer Info */}
         <div className="row">
           <span className="label">Payer:</span>
-          <span>{data.taxpayerName}</span>
+          <span className="value">{data.taxpayerName}</span>
         </div>
         <div className="row">
           <span className="label">Type:</span>
-          <span>{data.taxType}</span>
+          <span className="value">{data.taxType}</span>
         </div>
 
+        {/* Conditional Details based on Tax Type */}
+        
+        {/* Trade Details */}
+        {data.goodsType && (
+          <div className="row">
+            <span className="label">Goods:</span>
+            <span className="value" style={{ textTransform: 'capitalize' }}>{data.goodsType}</span>
+          </div>
+        )}
+        {data.cargoValue && (
+          <div className="row">
+            <span className="label">Value:</span>
+            <span className="value">{data.cargoValue}</span>
+          </div>
+        )}
+
+        {/* Road Details */}
+        {data.vehicleType && (
+          <div className="row">
+            <span className="label">Vehicle:</span>
+            <span className="value" style={{ textTransform: 'capitalize' }}>{data.vehicleType}</span>
+          </div>
+        )}
+
+        {/* Land Details */}
+        {data.landArea && (
+          <div className="row">
+            <span className="label">Area:</span>
+            <span className="value">{data.landArea} acres</span>
+          </div>
+        )}
+
+        {/* Total Amount */}
         <div className="total">
           TOTAL: {data.amount}
         </div>
 
+        {/* Footer */}
         <div className="footer">
           <p>Thank you for your contribution.</p>
           <p>Retain this receipt for your records.</p>
+          <p style={{ marginTop: '5px' }}>*** End of Receipt ***</p>
         </div>
       </div>
     </div>

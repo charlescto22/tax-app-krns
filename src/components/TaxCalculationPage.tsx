@@ -152,7 +152,6 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
     setErrors({});
   }, [taxCategory]);
 
-  // ... (Keeping existing Calculation useEffects for Trade, Road, Land) ...
   // Path A: Trade & Customs Calculation
   useEffect(() => {
     if (calculationPath === "trade" && cargoValue && taxRate) {
@@ -307,10 +306,16 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
     date: new Date().toLocaleDateString(),
     time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     station: collectionStation || "Unknown Station",
-    collector: "Tax Collector", 
+    collector: auth.currentUser?.email || "Tax Collector",
     taxpayerName: taxpayerName || "Guest",
     taxType: taxCategory || "General",
     amount: `MMK ${calculatedTax.toLocaleString()}`,
+    // Include new fields for detailed receipt
+    goodsType: calculationPath === "trade" ? goodsType : undefined,
+    cargoValue: calculationPath === "trade" ? cargoValue : undefined,
+    vehicleType: calculationPath === "road" ? vehicleType : undefined,
+    landArea: calculationPath === "land" ? landArea : undefined,
+    department: "Tax Department" // You might want to fetch this dynamically if needed
   };
 
   // Setup Print Handler
@@ -456,7 +461,6 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
         </CardContent>
       </Card>
 
-      {/* ... Rest of Path A, B, C Cards and Buttons (unchanged) ... */}
       {/* PATH A: Trade & Customs */}
       {calculationPath === "trade" && (
         <Card className="border-blue-200 bg-blue-50/50">
