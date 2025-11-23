@@ -11,8 +11,8 @@ import { Alert, AlertDescription } from "./ui/alert";
 import { Textarea } from "./ui/textarea";
 
 // Import Firestore Tools
-import { db } from "../firebase"; 
-import { collection, addDoc } from "firebase/firestore"; 
+import { db, auth } from "../firebase"; 
+import { collection, addDoc, doc, getDoc } from "firebase/firestore"; 
 
 // Import Printing Tools
 import { useReactToPrint } from "react-to-print";
@@ -42,6 +42,18 @@ const ZONE_RATES = {
   rural: 8000,
   highland: 5000,
 };
+
+// Centralized list of all tax types to match IDs used in UserManagementPage
+const ALL_TAX_TYPES = [
+  { id: "customs", label: "Customs Duty" },
+  { id: "commercial", label: "Commercial Tax" },
+  { id: "import-export", label: "Import/Export Tax" },
+  { id: "road", label: "Road Tax" },
+  { id: "bridge", label: "Bridge Tax" },
+  { id: "land", label: "Land Tax" },
+  { id: "irrigation", label: "Irrigation Tax" },
+  { id: "agriculture", label: "Agriculture Tax" },
+];
 
 interface TaxCalculationPageProps {
   onNavigateToCollection?: () => void;
@@ -85,9 +97,44 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
   const [collectionStation, setCollectionStation] = useState("");
   const [remarks, setRemarks] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  
+  // Permission State
+  const [allowedTaxTypes, setAllowedTaxTypes] = useState<string[]>([]);
+  const [isLoadingPermissions, setIsLoadingPermissions] = useState(true);
 
-  // Ref for printing - typed correctly
+  // Ref for printing
   const receiptRef = useRef<HTMLDivElement>(null);
+
+  // Fetch User Permissions on Mount
+  useEffect(() => {
+    const fetchPermissions = async () => {
+      if (!auth.currentUser) return;
+      
+      try {
+        const userDoc = await getDoc(doc(db, "users", auth.currentUser.uid));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          // If admin/manager, allow all. If collector, use specific list.
+          if (userData.role === 'administrator' || userData.role === 'remittance-manager') {
+            setAllowedTaxTypes(ALL_TAX_TYPES.map(t => t.id));
+          } else {
+            setAllowedTaxTypes(userData.allowedTaxTypes || []);
+          }
+          
+          // Pre-fill station if assigned to user
+          if (userData.station) {
+             setCollectionStation(userData.station);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching permissions:", error);
+      } finally {
+        setIsLoadingPermissions(false);
+      }
+    };
+
+    fetchPermissions();
+  }, []);
 
   // Determine calculation path based on tax category
   useEffect(() => {
@@ -105,6 +152,7 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
     setErrors({});
   }, [taxCategory]);
 
+  // ... (Keeping existing Calculation useEffects for Trade, Road, Land) ...
   // Path A: Trade & Customs Calculation
   useEffect(() => {
     if (calculationPath === "trade" && cargoValue && taxRate) {
@@ -138,7 +186,7 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
     if (calculationPath === "land" && landArea && zoneType) {
       const area = parseFloat(landArea);
       const rate = ZONE_RATES[zoneType as keyof typeof ZONE_RATES];
-      if (!isNaN(area) && rate) {
+      if (rate && !isNaN(area)) {
         setCalculatedTax(area * rate);
       }
     }
@@ -207,22 +255,17 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
 
   const handleSave = async () => { 
     if (validateForm()) {
-      const isOnline = navigator.onLine; // PWA check
+      const isOnline = navigator.onLine; 
       
       const record = {
         date: new Date().toISOString().split('T')[0], 
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        
-        // Fields matching our Table columns
         taxType: taxCategory,
         station: collectionStation,
-        amount: `MMK ${calculatedTax.toLocaleString()}`, // Display formatted amount
-        rawAmount: calculatedTax, // Store raw number for future calculation
-        
-        // Workflow status: Pending if Online, Offline-Pending if Offline
+        amount: `MMK ${calculatedTax.toLocaleString()}`,
+        rawAmount: calculatedTax,
         status: isOnline ? "Pending" : "Offline-Pending", 
         
-        // Detailed data for editing/viewing later
         details: {
           receiptNumber,
           taxpayerName,
@@ -234,30 +277,23 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
           vehicleType: calculationPath === "road" ? vehicleType : null,
           landArea: calculationPath === "land" ? landArea : null,
         },
-        
-        // Metadata
         createdAt: new Date().toISOString(),
-        createdBy: "Tax Collector"
+        createdBy: auth.currentUser?.email || "Tax Collector" // Use real email
       };
       
       try {
         if (isOnline) {
-          // 🚀 ONLINE MODE: Send directly to Firestore
           const docRef = await addDoc(collection(db, "transactions"), record);
           console.log("Document written with ID: ", docRef.id);
           alert(`✓ Submission Sent to Cloud!\n\nReceipt: ${receiptNumber}\nID: ${docRef.id}\nStatus: PENDING VERIFICATION`);
         } else {
-          // 📴 OFFLINE MODE: Save to local storage queue
           const offlineRecord = saveOfflineRecord(record);
           console.log("Offline Record Saved:", offlineRecord);
           alert(`⚠️ OFFLINE MODE\n\nReceipt: ${receiptNumber}\nStatus: SAVED TO DEVICE\n\nRecord saved locally. Sync when internet returns.`);
         }
-        
         handleReset();
-        
       } catch (e) {
         console.error("Error adding document: ", e);
-        // Fallback for online failures
         alert("❌ Error saving to database. Please check your Firebase configuration or network.");
       }
     } else {
@@ -279,7 +315,7 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
 
   // Setup Print Handler
   const handlePrint = useReactToPrint({
-    contentRef: receiptRef, // NOTE: Updated property name for newer versions of react-to-print
+    contentRef: receiptRef,
     documentTitle: `Receipt-${receiptNumber}`,
     onAfterPrint: () => console.log("Print successful"),
     onPrintError: (error) => console.error("Print failed:", error),
@@ -338,21 +374,25 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="taxCategory">Tax Category *</Label>
-            <Select value={taxCategory} onValueChange={setTaxCategory}>
+            
+            {/* UPDATED SELECT: Filters options based on allowedTaxTypes */}
+            <Select value={taxCategory} onValueChange={setTaxCategory} disabled={isLoadingPermissions}>
               <SelectTrigger id="taxCategory">
-                <SelectValue placeholder="Select tax category..." />
+                <SelectValue placeholder={isLoadingPermissions ? "Loading permissions..." : "Select tax category..."} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="customs">Customs Duty</SelectItem>
-                <SelectItem value="commercial">Commercial Tax</SelectItem>
-                <SelectItem value="import-export">Import/Export Tax</SelectItem>
-                <SelectItem value="road">Road Tax</SelectItem>
-                <SelectItem value="bridge">Bridge Tax</SelectItem>
-                <SelectItem value="land">Land Tax</SelectItem>
-                <SelectItem value="irrigation">Irrigation Tax</SelectItem>
-                <SelectItem value="agriculture">Agriculture Tax</SelectItem>
+                {ALL_TAX_TYPES
+                  .filter(type => allowedTaxTypes.includes(type.id)) // <--- THE FILTER
+                  .map(type => (
+                    <SelectItem key={type.id} value={type.id}>{type.label}</SelectItem>
+                  ))
+                }
               </SelectContent>
             </Select>
+            
+            {allowedTaxTypes.length === 0 && !isLoadingPermissions && (
+               <p className="text-xs text-red-500 mt-1">You are not authorized to collect any taxes. Contact Admin.</p>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -416,6 +456,7 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
         </CardContent>
       </Card>
 
+      {/* ... Rest of Path A, B, C Cards and Buttons (unchanged) ... */}
       {/* PATH A: Trade & Customs */}
       {calculationPath === "trade" && (
         <Card className="border-blue-200 bg-blue-50/50">

@@ -1,17 +1,103 @@
+// 1. Add useEffect to the import list
+import { useState, useEffect } from "react"; 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Switch } from "./ui/switch";
 import { Separator } from "./ui/separator";
-import { User, Bell, Shield, Database, Mail, Lock } from "lucide-react";
+import { User, Bell, Shield, Database, Mail, Lock, Loader2 } from "lucide-react";
 import type { User as UserType } from "../App";
+import { auth, db } from "../firebase";
+import { updateProfile, updatePassword } from "firebase/auth";
+import { doc, updateDoc } from "firebase/firestore";
+
+// Add APP_VERSION constant
+const APP_VERSION = "1.0.2 (Beta)";
 
 interface SettingsPageProps {
   currentUser: UserType;
 }
 
 export function SettingsPage({ currentUser }: SettingsPageProps) {
+  const [name, setName] = useState(currentUser.name);
+  const [email] = useState(currentUser.email); 
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  // Monitor network status
+  useEffect(() => {
+    const handleStatusChange = () => setIsOnline(navigator.onLine);
+    window.addEventListener('online', handleStatusChange);
+    window.addEventListener('offline', handleStatusChange);
+    return () => {
+      window.removeEventListener('online', handleStatusChange);
+      window.removeEventListener('offline', handleStatusChange);
+    };
+  }, []);
+
+  const handleUpdateProfile = async () => {
+    if (!auth.currentUser) return;
+    setProfileLoading(true);
+    try {
+      // 1. Update Auth Profile
+      await updateProfile(auth.currentUser, {
+        displayName: name
+      });
+
+      // 2. Update Firestore Document
+      const userRef = doc(db, "users", auth.currentUser.uid);
+      await updateDoc(userRef, {
+        name: name
+      });
+
+      alert("Profile updated successfully!");
+    } catch (error: any) {
+      console.error("Error updating profile:", error);
+      alert("Failed to update profile: " + error.message);
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (!auth.currentUser) return;
+    
+    if (newPassword !== confirmPassword) {
+      alert("New passwords do not match.");
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      alert("Password must be at least 6 characters.");
+      return;
+    }
+
+    setPasswordLoading(true);
+    try {
+      await updatePassword(auth.currentUser, newPassword);
+      
+      alert("Password changed successfully!");
+      setNewPassword("");
+      setConfirmPassword("");
+      setCurrentPassword("");
+    } catch (error: any) {
+      console.error("Error changing password:", error);
+      if (error.code === 'auth/requires-recent-login') {
+        alert("For security, please log out and log back in before changing your password.");
+      } else {
+        alert("Failed to change password: " + error.message);
+      }
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
   return (
     <>
       <div className="mb-6">
@@ -30,25 +116,29 @@ export function SettingsPage({ currentUser }: SettingsPageProps) {
               <CardDescription>Update your personal information and contact details</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="firstName">First Name</Label>
-                  <Input id="firstName" defaultValue={currentUser.name.split(' ')[0]} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="lastName">Last Name</Label>
-                  <Input id="lastName" defaultValue={currentUser.name.split(' ').slice(1).join(' ')} />
+                  <Label htmlFor="displayName">Full Name</Label>
+                  <Input 
+                    id="displayName" 
+                    value={name} 
+                    onChange={(e) => setName(e.target.value)} 
+                  />
                 </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Email Address</Label>
-                <Input id="email" type="email" defaultValue={currentUser.email} />
+                <Input id="email" type="email" value={email} disabled className="bg-gray-100" />
+                <p className="text-xs text-gray-500">Email cannot be changed.</p>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="department">Department</Label>
-                <Input id="department" defaultValue="Tax Administration" />
-              </div>
-              <Button className="bg-blue-600 hover:bg-blue-700">Save Changes</Button>
+              <Button 
+                className="bg-blue-600 hover:bg-blue-700"
+                onClick={handleUpdateProfile}
+                disabled={profileLoading}
+              >
+                {profileLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Save Changes
+              </Button>
             </CardContent>
           </Card>
 
@@ -71,22 +161,6 @@ export function SettingsPage({ currentUser }: SettingsPageProps) {
               <Separator />
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div className="flex-1">
-                  <div className="text-gray-900">Transaction Alerts</div>
-                  <div className="text-gray-500">Get notified of large transactions</div>
-                </div>
-                <Switch defaultChecked />
-              </div>
-              <Separator />
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                <div className="flex-1">
-                  <div className="text-gray-900">Daily Summary</div>
-                  <div className="text-gray-500">Receive daily collection summaries</div>
-                </div>
-                <Switch />
-              </div>
-              <Separator />
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                <div className="flex-1">
                   <div className="text-gray-900">System Updates</div>
                   <div className="text-gray-500">Important system announcements</div>
                 </div>
@@ -105,18 +179,40 @@ export function SettingsPage({ currentUser }: SettingsPageProps) {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="currentPassword">Current Password</Label>
-                <Input id="currentPassword" type="password" />
+                <Label htmlFor="currentPassword">Current Password (Required for verification)</Label>
+                <Input 
+                  id="currentPassword" 
+                  type="password" 
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="newPassword">New Password</Label>
-                <Input id="newPassword" type="password" />
+                <Input 
+                  id="newPassword" 
+                  type="password" 
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                <Input id="confirmPassword" type="password" />
+                <Input 
+                  id="confirmPassword" 
+                  type="password" 
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                />
               </div>
-              <Button variant="outline">Change Password</Button>
+              <Button 
+                variant="outline" 
+                onClick={handleChangePassword}
+                disabled={passwordLoading}
+              >
+                {passwordLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Change Password
+              </Button>
             </CardContent>
           </Card>
         </div>
@@ -132,22 +228,17 @@ export function SettingsPage({ currentUser }: SettingsPageProps) {
             <CardContent className="space-y-4">
               <div>
                 <div className="text-gray-600 mb-1">Role</div>
-                <div className="text-gray-900">Director Level Admin</div>
+                <div className="text-gray-900 font-medium capitalize">
+                  {currentUser.role.replace("-", " ")}
+                </div>
               </div>
+              
+              {/* REMOVED User ID section */}
+              
               <Separator />
               <div>
-                <div className="text-gray-600 mb-1">Access Level</div>
-                <div className="text-gray-900">Full Access</div>
-              </div>
-              <Separator />
-              <div>
-                <div className="text-gray-600 mb-1">Account Created</div>
-                <div className="text-gray-900">Jan 15, 2024</div>
-              </div>
-              <Separator />
-              <div>
-                <div className="text-gray-600 mb-1">Last Login</div>
-                <div className="text-gray-900">Nov 20, 2025 14:35</div>
+                <div className="text-gray-600 mb-1">Email</div>
+                <div className="text-gray-900">{currentUser.email}</div>
               </div>
             </CardContent>
           </Card>
@@ -161,18 +252,15 @@ export function SettingsPage({ currentUser }: SettingsPageProps) {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <div className="text-gray-600 mb-1">Version</div>
-                <div className="text-gray-900">v2.5.1</div>
+                <div className="text-gray-600 mb-1">App Version</div>
+                <div className="text-gray-900">{APP_VERSION}</div>
               </div>
               <Separator />
               <div>
-                <div className="text-gray-600 mb-1">Database Status</div>
-                <div className="text-green-600">Connected</div>
-              </div>
-              <Separator />
-              <div>
-                <div className="text-gray-600 mb-1">Last Backup</div>
-                <div className="text-gray-900">Nov 20, 2025 02:00</div>
+                <div className="text-gray-600 mb-1">Connection Status</div>
+                <div className={`font-medium ${isOnline ? "text-green-600" : "text-orange-600"}`}>
+                  {isOnline ? "● Connected (Online)" : "○ Offline Mode"}
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -185,8 +273,14 @@ export function SettingsPage({ currentUser }: SettingsPageProps) {
               </div>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-600 mb-4">Need help? Contact our support team</p>
-              <Button variant="outline" className="w-full">Contact Support</Button>
+              <p className="text-gray-600 mb-4">Need help? Contact our IT support team.</p>
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={() => window.location.href = `mailto:itofficer@irt-iec.karennistategovernment.org?subject=Support Request from ${currentUser.name}`}
+              >
+                Contact Support via Email
+              </Button>
             </CardContent>
           </Card>
         </div>
