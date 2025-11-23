@@ -1,0 +1,41 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper function to check user role (assuming role is stored in user's auth token or a separate collection)
+    // For simplicity in this example, we'll assume a 'users' collection
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isRole(role) {
+      return isAuthenticated() && getUserData().role == role;
+    }
+
+    // Rules for 'transactions' collection
+    match /transactions/{transactionId} {
+      // Read: All authenticated users can read (or restrict further if needed)
+      allow read: if isAuthenticated();
+      
+      // Create: Only tax collectors and admins can create
+      allow create: if isRole('tax-collector') || isRole('administrator');
+      
+      // Update: Only admins can update (e.g., approve/reject)
+      allow update: if isRole('administrator');
+      
+      // Delete: Only admins can delete
+      allow delete: if isRole('administrator');
+    }
+    
+    // Rules for 'users' collection
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isRole('administrator');
+    }
+  }
+}
