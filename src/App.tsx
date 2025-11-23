@@ -15,6 +15,7 @@ import { RevenueDistributionPage } from "./components/RevenueDistributionPage";
 import { ReportsPage } from "./components/ReportsPage";
 import { SettingsPage } from "./components/SettingsPage";
 import { UserManagementPage } from "./components/UserManagementPage";
+import { AdminSeeder } from "./components/AdminSeeder";
 
 // User roles
 export type UserRole = "administrator" | "remittance-manager" | "tax-collector";

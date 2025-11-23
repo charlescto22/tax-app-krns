@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -6,11 +6,17 @@ import { Label } from "./ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { Badge } from "./ui/badge";
-import { Calculator, DollarSign, Truck, TreePine, Package, AlertCircle, CheckCircle, Printer, Save, History, Sliders } from "lucide-react";
+import { Calculator, DollarSign, Truck, TreePine, Package, AlertCircle, CheckCircle, Printer, Save } from "lucide-react";
 import { Alert, AlertDescription } from "./ui/alert";
 import { Textarea } from "./ui/textarea";
-import { db } from "../firebase"; // Import the connection we made
-import { collection, addDoc } from "firebase/firestore";
+
+// Import Firestore Tools
+import { db } from "../firebase"; 
+import { collection, addDoc } from "firebase/firestore"; 
+
+// Import Printing Tools
+import { useReactToPrint } from "react-to-print";
+import { ReceiptTemplate } from "./ReceiptTemplate";
 
 // Lookup tables for rates
 const COMMODITY_RATES = {
@@ -41,6 +47,19 @@ interface TaxCalculationPageProps {
   onNavigateToCollection?: () => void;
 }
 
+// Helper for offline saving (PWA Feature)
+const saveOfflineRecord = (record: any) => {
+  const existingQueue = JSON.parse(localStorage.getItem("offlineTaxQueue") || "[]");
+  const offlineRecord = { 
+    ...record, 
+    status: "Offline-Pending", 
+    synced: false 
+  };
+  
+  localStorage.setItem("offlineTaxQueue", JSON.stringify([...existingQueue, offlineRecord]));
+  return offlineRecord;
+};
+
 export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPageProps) {
   const [taxCategory, setTaxCategory] = useState("");
   const [calculationPath, setCalculationPath] = useState<"trade" | "road" | "land" | null>(null);
@@ -66,6 +85,9 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
   const [collectionStation, setCollectionStation] = useState("");
   const [remarks, setRemarks] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Ref for printing - typed correctly
+  const receiptRef = useRef<HTMLDivElement>(null);
 
   // Determine calculation path based on tax category
   useEffect(() => {
@@ -146,12 +168,12 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
     // Path-specific validation
     if (calculationPath === "trade") {
       if (!goodsType) newErrors.goodsType = "Goods type is required";
-      if (!cargoValue || parseFloat(cargoValue) <= 0) newErrors.cargoValue = "Valid cargo value is required";
-      if (!taxRate || parseFloat(taxRate) <= 0) newErrors.taxRate = "Valid tax rate is required";
+      if (!cargoValue || parseFloat(cargoValue) <= 0 || isNaN(parseFloat(cargoValue))) newErrors.cargoValue = "Valid cargo value is required";
+      if (!taxRate || parseFloat(taxRate) <= 0 || isNaN(parseFloat(taxRate))) newErrors.taxRate = "Valid tax rate is required";
     } else if (calculationPath === "road") {
       if (!vehicleType) newErrors.vehicleType = "Vehicle type is required";
     } else if (calculationPath === "land") {
-      if (!landArea || parseFloat(landArea) <= 0) newErrors.landArea = "Valid land area is required";
+      if (!landArea || parseFloat(landArea) <= 0 || isNaN(parseFloat(landArea))) newErrors.landArea = "Valid land area is required";
       if (!zoneType) newErrors.zoneType = "Zone type is required";
     }
 
@@ -183,22 +205,22 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
     setReceiptNumber(`RCP-${timestamp.toString().slice(-8)}`);
   };
 
-  const handleSave = async () => { // Note the 'async' keyword here!
-  if (validateForm()) {
-    try {
-      // Prepare the data object
+  const handleSave = async () => { 
+    if (validateForm()) {
+      const isOnline = navigator.onLine; // PWA check
+      
       const record = {
-        // We don't need to manually create an ID; Firestore does it automatically!
         date: new Date().toISOString().split('T')[0], 
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         
         // Fields matching our Table columns
         taxType: taxCategory,
         station: collectionStation,
-        amount: `MMK ${calculatedTax.toLocaleString()}`,
+        amount: `MMK ${calculatedTax.toLocaleString()}`, // Display formatted amount
+        rawAmount: calculatedTax, // Store raw number for future calculation
         
-        // Workflow status
-        status: "Pending", 
+        // Workflow status: Pending if Online, Offline-Pending if Offline
+        status: isOnline ? "Pending" : "Offline-Pending", 
         
         // Detailed data for editing/viewing later
         details: {
@@ -207,7 +229,6 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
           taxpayerNRC,
           calculationPath,
           remarks,
-          // Specifics based on path
           goodsType: calculationPath === "trade" ? goodsType : null,
           cargoValue: calculationPath === "trade" ? cargoValue : null,
           vehicleType: calculationPath === "road" ? vehicleType : null,
@@ -216,34 +237,53 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
         
         // Metadata
         createdAt: new Date().toISOString(),
-        createdBy: "Tax Collector" // Ideally, get this from currentUser.name
+        createdBy: "Tax Collector"
       };
       
-      // 3. SEND TO FIREBASE 🚀
-      // This line physically writes to the database in the cloud
-      const docRef = await addDoc(collection(db, "transactions"), record);
-      
-      console.log("Document written with ID: ", docRef.id);
-      
-      // Success Feedback
-      alert(`✓ Submission Sent to Cloud!\n\nReceipt: ${receiptNumber}\nID: ${docRef.id}\nStatus: PENDING VERIFICATION`);
-      
-      handleReset();
-      
-    } catch (e) {
-      console.error("Error adding document: ", e);
-      alert("❌ Error saving to database. Check your internet connection.");
-    }
-  } else {
-    alert("⚠️ Please complete all required fields correctly.");
-  }
-};
-
-  const handlePrint = () => {
-    if (calculatedTax > 0 && taxpayerName) {
-      window.print();
+      try {
+        if (isOnline) {
+          // 🚀 ONLINE MODE: Send directly to Firestore
+          const docRef = await addDoc(collection(db, "transactions"), record);
+          console.log("Document written with ID: ", docRef.id);
+          alert(`✓ Submission Sent to Cloud!\n\nReceipt: ${receiptNumber}\nID: ${docRef.id}\nStatus: PENDING VERIFICATION`);
+        } else {
+          // 📴 OFFLINE MODE: Save to local storage queue
+          const offlineRecord = saveOfflineRecord(record);
+          console.log("Offline Record Saved:", offlineRecord);
+          alert(`⚠️ OFFLINE MODE\n\nReceipt: ${receiptNumber}\nStatus: SAVED TO DEVICE\n\nRecord saved locally. Sync when internet returns.`);
+        }
+        
+        handleReset();
+        
+      } catch (e) {
+        console.error("Error adding document: ", e);
+        // Fallback for online failures
+        alert("❌ Error saving to database. Please check your Firebase configuration or network.");
+      }
+    } else {
+      alert("⚠️ Please complete all required fields correctly.");
     }
   };
+
+  // Prepare data for the receipt template
+  const receiptData = {
+    receiptNumber,
+    date: new Date().toLocaleDateString(),
+    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    station: collectionStation || "Unknown Station",
+    collector: "Tax Collector", 
+    taxpayerName: taxpayerName || "Guest",
+    taxType: taxCategory || "General",
+    amount: `MMK ${calculatedTax.toLocaleString()}`,
+  };
+
+  // Setup Print Handler
+  const handlePrint = useReactToPrint({
+    contentRef: receiptRef, // NOTE: Updated property name for newer versions of react-to-print
+    documentTitle: `Receipt-${receiptNumber}`,
+    onAfterPrint: () => console.log("Print successful"),
+    onPrintError: (error) => console.error("Print failed:", error),
+  });
 
   const getPathColor = () => {
     switch (calculationPath) {
@@ -681,6 +721,11 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
           </CardContent>
         </Card>
       )}
+
+      {/* Hidden Receipt Template for Printing */}
+      <div style={{ display: "none" }}>
+        <ReceiptTemplate ref={receiptRef} data={receiptData} />
+      </div>
     </div>
   );
 }

@@ -44,6 +44,8 @@ import {
 } from "lucide-react";
 import type { UserRole } from "../App";
 import { exportToCSV } from "../utils/exportUtils"; 
+import { db } from "../firebase";
+import { collection, onSnapshot, query, orderBy, doc, updateDoc } from "firebase/firestore";
 
 const handleExportToExcel = () => {
   if (!selectedReport) return;
@@ -178,7 +180,7 @@ interface MonthlyReconciliationPageProps {
 }
 
 export function MonthlyReconciliationPage({ userRole }: MonthlyReconciliationPageProps) {
-  const [reports, setReports] = useState<RemittanceReport[]>(mockReports);
+  const [reports, setReports] = useState<any[]>([]); 
   const [selectedReport, setSelectedReport] = useState<RemittanceReport | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -193,21 +195,20 @@ export function MonthlyReconciliationPage({ userRole }: MonthlyReconciliationPag
 
   // Auto-select first report when filters change
   useEffect(() => {
-    const filtered = reports.filter((report) => {
-      const matchesSearch =
-        report.gateLocation.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        report.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        report.submittedBy.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesStatus = statusFilter === "all" || report.status === statusFilter;
-      return matchesSearch && matchesStatus;
+    // Assuming you will save reports to a 'remittance_reports' collection
+    // Or you can query 'transactions' if you are aggregating them on the fly
+    const q = query(collection(db, "remittance_reports"), orderBy("submittedDate", "desc"));
+    
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const liveReports = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setReports(liveReports);
     });
 
-    if (filtered.length > 0 && !filtered.find(r => r.id === selectedReport?.id)) {
-      setSelectedReport(filtered[0]);
-    } else if (filtered.length === 0) {
-      setSelectedReport(null);
-    }
-  }, [searchTerm, statusFilter, reports]);
+    return () => unsubscribe();
+  }, []);
 
   // Filter reports
   const filteredReports = reports.filter((report) => {

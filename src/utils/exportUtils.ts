@@ -10,7 +10,6 @@ export const exportToCSV = (data: any[], filename: string) => {
   }
 
   // 1. Extract headers dynamically from the first object
-  // (Or you can pass a custom header array if you want strict ordering)
   const headers = Object.keys(data[0]);
   
   // 2. Create the CSV content

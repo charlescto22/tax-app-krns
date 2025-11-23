@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
 import { Button } from "./ui/button";
@@ -7,8 +7,24 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import { Plus, Edit, Trash2, UserCheck, Users as UsersIcon } from "lucide-react";
+import { Plus, Edit, Trash2, UserCheck, Users as UsersIcon, Loader2 } from "lucide-react";
 import type { UserRole } from "../App";
+
+// Firebase Imports
+import { db } from "../firebase";
+import { collection, onSnapshot, doc, setDoc, deleteDoc, updateDoc } from "firebase/firestore";
+import { initializeApp } from "firebase/app";
+import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+
+// Need to re-import config for the secondary app instance
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
+};
 
 interface UserData {
   id: string;
@@ -17,17 +33,9 @@ interface UserData {
   role: UserRole;
   station?: string;
   status: "active" | "inactive";
-  lastLogin: string;
+  lastLogin?: string;
+  createdAt?: string;
 }
-
-const mockUsers: UserData[] = [
-  { id: "1", name: "Director Level", email: "director@taxadmin.gov", role: "administrator", status: "active", lastLogin: "2025-11-20 14:35" },
-  { id: "2", name: "John Collector", email: "john.c@taxadmin.gov", role: "tax-collector", station: "Pasaela Gate", status: "active", lastLogin: "2025-11-20 13:20" },
-  { id: "3", name: "Mary Manager", email: "mary.m@taxadmin.gov", role: "remittance-manager", status: "active", lastLogin: "2025-11-20 12:15" },
-  { id: "4", name: "David Tax", email: "david.t@taxadmin.gov", role: "tax-collector", station: "8-Mile Gate", status: "active", lastLogin: "2025-11-20 11:45" },
-  { id: "5", name: "Sarah Remit", email: "sarah.r@taxadmin.gov", role: "remittance-manager", status: "active", lastLogin: "2025-11-19 16:30" },
-  { id: "6", name: "Tom Collector", email: "tom.c@taxadmin.gov", role: "tax-collector", station: "Central District", status: "inactive", lastLogin: "2025-11-18 09:00" },
-];
 
 const getRoleLabel = (role: UserRole): string => {
   switch (role) {
@@ -37,6 +45,8 @@ const getRoleLabel = (role: UserRole): string => {
       return "Remittance Manager";
     case "tax-collector":
       return "Tax Collector";
+    default:
+      return role;
   }
 };
 
@@ -48,27 +58,119 @@ const getRoleColor = (role: UserRole): string => {
       return "bg-purple-100 text-purple-800 hover:bg-purple-100";
     case "tax-collector":
       return "bg-green-100 text-green-800 hover:bg-green-100";
+    default:
+      return "bg-gray-100 text-gray-800";
   }
 };
 
 export function UserManagementPage() {
-  const [users, setUsers] = useState<UserData[]>(mockUsers);
+  const [users, setUsers] = useState<UserData[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UserData | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  // Form State
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    role: "tax-collector" as UserRole,
+    station: "",
+    password: ""
+  });
+
+  // 1. Fetch Users Real-time
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, "users"), (snapshot) => {
+      const userList = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as UserData));
+      setUsers(userList);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const handleAddUser = () => {
     setEditingUser(null);
+    setFormData({ name: "", email: "", role: "tax-collector", station: "", password: "" });
     setIsDialogOpen(true);
   };
 
   const handleEditUser = (user: UserData) => {
     setEditingUser(user);
+    setFormData({ 
+      name: user.name, 
+      email: user.email, 
+      role: user.role, 
+      station: user.station || "", 
+      password: "" // Password empty on edit
+    });
     setIsDialogOpen(true);
   };
 
-  const handleDeleteUser = (userId: string) => {
-    if (confirm("Are you sure you want to delete this user?")) {
-      setUsers(users.filter(u => u.id !== userId));
+  const handleSaveUser = async () => {
+    setLoading(true);
+    try {
+      if (editingUser) {
+        // Update Existing User (Firestore Only)
+        const userRef = doc(db, "users", editingUser.id);
+        await updateDoc(userRef, {
+          name: formData.name,
+          role: formData.role,
+          station: formData.station,
+          // Note: Changing email/password requires Admin SDK or user re-auth
+        });
+        alert("User updated successfully!");
+      } else {
+        // Create New User
+        if (!formData.password || formData.password.length < 6) {
+          alert("Password must be at least 6 characters.");
+          setLoading(false);
+          return;
+        }
+
+        // Workaround: Use a secondary app to create user without logging out admin
+        const secondaryApp = initializeApp(firebaseConfig, "Secondary");
+        const secondaryAuth = getAuth(secondaryApp);
+        
+        const userCredential = await createUserWithEmailAndPassword(secondaryAuth, formData.email, formData.password);
+        const newUser = userCredential.user;
+
+        // Save user profile to Firestore (Main DB)
+        await setDoc(doc(db, "users", newUser.uid), {
+          name: formData.name,
+          email: formData.email,
+          role: formData.role,
+          station: formData.station,
+          status: "active",
+          createdAt: new Date().toISOString(),
+          lastLogin: "Never"
+        });
+
+        // Cleanup secondary app
+        // Note: In older Firebase versions, deleteApp() might be needed. 
+        // In v9 modular, letting it go out of scope usually works, but explicit cleanup is safer if supported.
+        // await deleteApp(secondaryApp); 
+
+        alert(`User created successfully!\nEmail: ${formData.email}\nPassword: ${formData.password}`);
+      }
+      setIsDialogOpen(false);
+    } catch (error: any) {
+      console.error("Error saving user:", error);
+      alert("Error: " + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    if (confirm("Are you sure you want to delete this user from the database? (This does not delete their Auth account)")) {
+      try {
+        await deleteDoc(doc(db, "users", userId));
+      } catch (error) {
+        console.error("Error deleting user:", error);
+        alert("Failed to delete user.");
+      }
     }
   };
 
@@ -104,15 +206,30 @@ export function UserManagementPage() {
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
-              <Input id="name" placeholder="Enter full name" defaultValue={editingUser?.name} />
+              <Input 
+                id="name" 
+                placeholder="Enter full name" 
+                value={formData.name}
+                onChange={(e) => setFormData({...formData, name: e.target.value})}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email Address</Label>
-              <Input id="email" type="email" placeholder="user@taxadmin.gov" defaultValue={editingUser?.email} />
+              <Input 
+                id="email" 
+                type="email" 
+                placeholder="user@taxadmin.gov" 
+                value={formData.email}
+                onChange={(e) => setFormData({...formData, email: e.target.value})}
+                disabled={!!editingUser} // Disable email edit for now
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="role">Role</Label>
-              <Select defaultValue={editingUser?.role || "tax-collector"}>
+              <Select 
+                value={formData.role} 
+                onValueChange={(val) => setFormData({...formData, role: val as UserRole})}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select role" />
                 </SelectTrigger>
@@ -125,18 +242,36 @@ export function UserManagementPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="station">Station (Optional)</Label>
-              <Input id="station" placeholder="e.g., Pasaela Gate" defaultValue={editingUser?.station} />
+              <Input 
+                id="station" 
+                placeholder="e.g., Pasaela Gate" 
+                value={formData.station}
+                onChange={(e) => setFormData({...formData, station: e.target.value})}
+              />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" placeholder={editingUser ? "Leave blank to keep current" : "Enter password"} />
-            </div>
+            {!editingUser && (
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input 
+                  id="password" 
+                  type="password" 
+                  placeholder="Enter password" 
+                  value={formData.password}
+                  onChange={(e) => setFormData({...formData, password: e.target.value})}
+                />
+              </div>
+            )}
           </div>
           <div className="flex gap-2">
             <Button variant="outline" className="flex-1" onClick={() => setIsDialogOpen(false)}>
               Cancel
             </Button>
-            <Button className="flex-1 bg-blue-600 hover:bg-blue-700" onClick={() => setIsDialogOpen(false)}>
+            <Button 
+              className="flex-1 bg-blue-600 hover:bg-blue-700" 
+              onClick={handleSaveUser}
+              disabled={loading}
+            >
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {editingUser ? "Update User" : "Create User"}
             </Button>
           </div>
@@ -230,7 +365,11 @@ export function UserManagementPage() {
                         {user.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-gray-600">{user.lastLogin}</TableCell>
+                    <TableCell className="text-gray-600">
+                      {user.lastLogin 
+                        ? new Date(user.lastLogin).toLocaleDateString() 
+                        : "Never"}
+                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
                         <Button variant="ghost" size="sm" onClick={() => handleEditUser(user)}>
@@ -240,7 +379,8 @@ export function UserManagementPage() {
                           variant="ghost" 
                           size="sm" 
                           onClick={() => handleDeleteUser(user.id)}
-                          disabled={user.role === "administrator"}
+                          // Optional: Prevent deleting admins or yourself
+                          // disabled={user.role === "administrator"} 
                         >
                           <Trash2 className="h-4 w-4 text-red-600" />
                         </Button>
@@ -250,83 +390,6 @@ export function UserManagementPage() {
                 ))}
               </TableBody>
             </Table>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle>Role Permissions</CardTitle>
-          <CardDescription>Overview of what each role can access</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            <div className="border border-gray-200 rounded-lg p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <Badge className="bg-blue-100 text-blue-800">Administrator</Badge>
-              </div>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li className="flex items-center gap-2">
-                  <span className="text-green-600">✓</span> Dashboard access
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-green-600">✓</span> Tax collection (full)
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-green-600">✓</span> Remittance management
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-green-600">✓</span> Reports
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-green-600">✓</span> User management
-                </li>
-              </ul>
-            </div>
-            <div className="border border-gray-200 rounded-lg p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <Badge className="bg-purple-100 text-purple-800">Remittance Manager</Badge>
-              </div>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li className="flex items-center gap-2">
-                  <span className="text-red-600">✗</span> Dashboard access
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-green-600">✓</span> Tax collection (view only)
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-green-600">✓</span> Remittance management
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-green-600">✓</span> Reports
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-red-600">✗</span> User management
-                </li>
-              </ul>
-            </div>
-            <div className="border border-gray-200 rounded-lg p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <Badge className="bg-green-100 text-green-800">Tax Collector</Badge>
-              </div>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li className="flex items-center gap-2">
-                  <span className="text-red-600">✗</span> Dashboard access
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-green-600">✓</span> Tax collection only
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-red-600">✗</span> Remittance management
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-red-600">✗</span> Reports
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-red-600">✗</span> User management
-                </li>
-              </ul>
-            </div>
           </div>
         </CardContent>
       </Card>
