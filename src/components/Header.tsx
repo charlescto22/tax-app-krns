@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Wifi, WifiOff, RefreshCw } from "lucide-react"; // Add these icons
 // ... existing imports
+import { LanguageSwitcher } from "./LanguageSwitcher"; // Import LanguageSwitcher
 
 export function Header({ onMenuClick, currentUser, onLogout }: HeaderProps) {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -51,7 +52,8 @@ export function Header({ onMenuClick, currentUser, onLogout }: HeaderProps) {
 
         {/* 👇 ADD THIS NEW SECTION: Network Status Indicator 👇 */}
         <div className="flex items-center gap-2 mr-2">
-          {isOnline ? (
+          <LanguageSwitcher />
+           {isOnline ? (
             <div className="flex items-center gap-2 px-3 py-1 bg-green-50 text-green-700 rounded-full text-xs font-medium border border-green-200">
               <Wifi className="h-3 w-3" />
               <span className="hidden sm:inline">Online</span>

@@ -2,19 +2,8 @@ import { LayoutDashboard, Wallet, RefreshCw, FileText, Settings, Users, X, Calcu
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import type { UserRole } from "../App";
-
-const navItems = [
-  { icon: LayoutDashboard, label: "Dashboard", id: "dashboard", roles: ["administrator"] },
-  { icon: Wallet, label: "Tax Collection", id: "tax-collection", roles: ["administrator", "remittance-manager", "tax-collector"] },
-  { icon: Calculator, label: "Tax Calculation", id: "tax-calculation", roles: ["administrator", "remittance-manager", "tax-collector"] },
-  { icon: Sliders, label: "Tax Rate Management", id: "tax-rate-management", roles: ["administrator"] },
-  { icon: RefreshCw, label: "Remittance Management", id: "remittance", roles: ["administrator", "remittance-manager"] },
-  { icon: FileCheck, label: "Monthly Reconciliation", id: "monthly-reconciliation", roles: ["administrator", "remittance-manager"] },
-  { icon: TrendingUp, label: "Revenue Distribution", id: "revenue-distribution", roles: ["administrator"] },
-  { icon: FileText, label: "Reports", id: "reports", roles: ["administrator", "remittance-manager"] },
-  { icon: Users, label: "User Management", id: "user-management", roles: ["administrator"] },
-  { icon: Settings, label: "User Settings", id: "settings", roles: ["administrator", "remittance-manager", "tax-collector"] },
-];
+// Import the language hook
+import { useLanguage } from "../contexts/LanguageContext";
 
 const getRoleBadgeColor = (role: UserRole): string => {
   switch (role) {
@@ -52,6 +41,23 @@ interface SidebarProps {
 }
 
 export function Sidebar({ activePage, onNavigate, isOpen, onClose, userRole, onLogout }: SidebarProps) {
+  // 1. Get the translation function
+  const { t } = useLanguage();
+
+  // 2. Define navItems INSIDE the component so we can use 't'
+  const navItems = [
+    { icon: LayoutDashboard, label: t("dashboard"), id: "dashboard", roles: ["administrator"] },
+    { icon: Wallet, label: t("taxCollection"), id: "tax-collection", roles: ["administrator", "remittance-manager", "tax-collector"] },
+    { icon: Calculator, label: t("taxCalculation"), id: "tax-calculation", roles: ["administrator", "remittance-manager", "tax-collector"] },
+    { icon: Sliders, label: t("taxRateManagement"), id: "tax-rate-management", roles: ["administrator"] },
+    { icon: RefreshCw, label: t("remittance"), id: "remittance", roles: ["administrator", "remittance-manager"] },
+    { icon: FileCheck, label: t("reconciliation"), id: "monthly-reconciliation", roles: ["administrator", "remittance-manager"] },
+    { icon: TrendingUp, label: t("revenueDistribution"), id: "revenue-distribution", roles: ["administrator"] },
+    { icon: FileText, label: t("reports"), id: "reports", roles: ["administrator", "remittance-manager"] },
+    { icon: Users, label: t("userManagement"), id: "user-management", roles: ["administrator"] },
+    { icon: Settings, label: t("settings"), id: "settings", roles: ["administrator", "remittance-manager", "tax-collector"] },
+  ];
+
   // Filter navigation items based on user role
   const allowedNavItems = navItems.filter(item => item.roles.includes(userRole));
 
@@ -87,9 +93,7 @@ export function Sidebar({ activePage, onNavigate, isOpen, onClose, userRole, onL
 
         {/* Navigation Items */}
         <nav className="flex-1 overflow-y-auto p-4 space-y-1">
-          {navItems
-            .filter((item) => item.roles.includes(userRole))
-            .map((item) => {
+          {allowedNavItems.map((item) => {
               const Icon = item.icon;
               const isActive = activePage === item.id;
               return (
@@ -119,7 +123,8 @@ export function Sidebar({ activePage, onNavigate, isOpen, onClose, userRole, onL
               onClick={onLogout}
             >
               <LogOut className="mr-3 h-5 w-5" />
-              Logout
+              {/* You can also translate 'Logout' here if you want */}
+              {t("logout")} 
             </Button>
           </div>
         )}
