@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { db } from "../firebase";
+import { collection, addDoc } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -30,28 +32,52 @@ export function TaxPayerForm({ onBack }: TaxPayerFormProps) {
     receiptNumber: "",
     remarks: "",
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => {
       const updated = { ...prev, [field]: value };
-      
+
       // Auto-calculate tax if taxable amount and tax rate are present
       if (field === "taxableAmount" || field === "taxRate") {
         const amount = parseFloat(field === "taxableAmount" ? value : updated.taxableAmount) || 0;
         const rate = parseFloat(field === "taxRate" ? value : updated.taxRate) || 0;
         updated.calculatedTax = (amount * rate / 100).toFixed(2);
       }
-      
+
       return updated;
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
-    // Here you would typically send the data to your backend
-    alert("Tax collection record created successfully!");
-    onBack();
+    setIsSubmitting(true); // Disable the button while saving
+
+    try {
+      // 1. Get today's date in YYYY-MM-DD format so the MetricsCard can count it as "Today"
+      const todayStr = new Date().toISOString().split('T')[0];
+
+      // 2. Prepare the exact data structure Firebase needs
+      const transactionData = {
+        ...formData, // Keep all the detailed form data (name, address, etc.)
+        amount: parseFloat(formData.calculatedTax) || 0, // The MetricsCard looks for 'amount' as a number
+        date: todayStr, // The MetricsCard looks for 'date'
+        station: formData.collectionStation, // The MetricsCard looks for 'station'
+        status: "Verified", // Set to Verified so it counts towards Total Revenue immediately
+        createdAt: new Date().toISOString() // Good practice to have an exact timestamp
+      };
+
+      // 3. Send it to the "transactions" collection in Firestore
+      await addDoc(collection(db, "transactions"), transactionData);
+
+      alert("Tax collection record saved to database successfully!");
+      onBack(); // Send the user back to the table
+    } catch (error) {
+      console.error("Error adding document: ", error);
+      alert("Failed to save record to database. Please check your connection.");
+    } finally {
+      setIsSubmitting(false); // Re-enable the button
+    }
   };
 
   return (
@@ -338,9 +364,13 @@ export function TaxPayerForm({ onBack }: TaxPayerFormProps) {
               <Button type="button" variant="outline" onClick={onBack} className="w-full sm:w-auto">
                 Cancel
               </Button>
-              <Button type="submit" className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto">
+              <Button
+                type="submit"
+                className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
+                disabled={isSubmitting}
+              >
                 <Save className="h-4 w-4 mr-2" />
-                Save Collection Record
+                {isSubmitting ? "Saving to Database..." : "Save Collection Record"}
               </Button>
             </div>
           </CardContent>
