@@ -4,17 +4,12 @@ import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Plus, Download, Filter, Eye, Lock, Calculator } from "lucide-react";
 import type { UserRole } from "../App";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { TaxPayerForm } from "./TaxPayerForm";
 import { useLanguage } from "../contexts/LanguageContext";
-
-const collections = [
-  { id: "1", station: "Pasaela Gate", taxType: "Commercial Tax", amount: "MMK 1,245,000", collectors: 3, status: "Active" },
-  { id: "2", station: "8-Mile Gate", taxType: "Customs Duty", amount: "MMK 2,850,000", collectors: 5, status: "Active" },
-  { id: "3", station: "Central District", taxType: "Property Tax", amount: "MMK 980,000", collectors: 2, status: "Active" },
-  { id: "4", station: "Township Office 4", taxType: "Land Tax", amount: "MMK 560,000", collectors: 2, status: "Inactive" },
-  { id: "5", station: "Border Checkpoint 2", taxType: "Customs Duty", amount: "MMK 3,200,000", collectors: 6, status: "Active" },
-];
+// 👇 1. Import Firebase 👇
+import { db } from "../firebase";
+import { collection, onSnapshot, query } from "firebase/firestore";
 
 interface TaxCollectionPageProps {
   userRole: UserRole;
@@ -24,10 +19,75 @@ interface TaxCollectionPageProps {
 export function TaxCollectionPage({ userRole, onNavigateToCalculation }: TaxCollectionPageProps) {
   const isReadOnly = userRole === "remittance-manager";
   const [showTaxPayerForm, setShowTaxPayerForm] = useState(false);
-
   const { t } = useLanguage();
 
-  // If showing the tax payer form, render it instead of the main view
+  // 👇 2. Add State for Real-Time Data 👇
+  const [liveStations, setLiveStations] = useState<any[]>([]);
+  const [stats, setStats] = useState({
+    activeStations: 0,
+    todaysCollection: 0,
+    todayCount: 0,
+    avgTransaction: 0,
+  });
+
+  // 👇 3. Listen to Firebase and calculate totals automatically 👇
+  useEffect(() => {
+    const q = query(collection(db, "transactions"));
+    
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const todayStr = new Date().toISOString().split('T')[0];
+      let todaysTotal = 0;
+      let todayCount = 0;
+      const stationMap = new Map();
+
+      snapshot.docs.forEach(doc => {
+        const data = doc.data();
+        
+        // Only count verified transactions
+        if (data.status === "Verified") {
+          // Calculate Today's totals
+          if (data.date === todayStr) {
+            todaysTotal += Number(data.amount) || 0;
+            todayCount++;
+          }
+
+          // Group by Station
+          const stationName = data.station || "Unknown Station";
+          if (!stationMap.has(stationName)) {
+            stationMap.set(stationName, {
+              id: stationName,
+              station: stationName,
+              taxType: "Multiple", // Since a station can collect various taxes
+              amount: 0,
+              collectors: Math.floor(Math.random() * 3) + 1, // Mocking active collectors for now
+              status: "Active"
+            });
+          }
+          
+          // Add this transaction's amount to the station's total
+          const stationData = stationMap.get(stationName);
+          stationData.amount += Number(data.amount) || 0;
+        }
+      });
+
+      // Format the stations for the table
+      const groupedStations = Array.from(stationMap.values()).map(st => ({
+        ...st,
+        formattedAmount: `MMK ${(st.amount / 100000).toFixed(1)} Lakh`
+      }));
+
+      setLiveStations(groupedStations);
+      setStats({
+        activeStations: stationMap.size,
+        todaysCollection: todaysTotal,
+        todayCount: todayCount,
+        avgTransaction: todayCount > 0 ? (todaysTotal / todayCount) : 0
+      });
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   if (showTaxPayerForm) {
     return <TaxPayerForm onBack={() => setShowTaxPayerForm(false)} />;
   }
@@ -46,8 +106,9 @@ export function TaxCollectionPage({ userRole, onNavigateToCalculation }: TaxColl
           </div>
         )}
       </div>
+      
       {!isReadOnly && (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 mb-6 mt-4">
           <Button variant="outline" className="flex-1 sm:flex-none">
             <Filter className="h-4 w-4 mr-2" />
             <span className="hidden sm:inline">{t("filter")}</span>
@@ -67,42 +128,40 @@ export function TaxCollectionPage({ userRole, onNavigateToCalculation }: TaxColl
         </div>
       )}
 
-
       {/* Quick Action Card */}
-      {
-        !isReadOnly && (
-          <Card className="border-blue-200 bg-blue-50/50 mb-6">
-            <CardContent className="pt-6">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div className="flex items-start gap-3">
-                  <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
-                    <Calculator className="h-5 w-5 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-gray-900 mb-1">{t("createNewCollection")}</h3>
-                    <p className="text-gray-600">{t("createNewCollectionDesc")}</p>
-                  </div>
+      {!isReadOnly && (
+        <Card className="border-blue-200 bg-blue-50/50 mb-6">
+          <CardContent className="pt-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
+                  <Calculator className="h-5 w-5 text-white" />
                 </div>
-                <Button
-                  onClick={onNavigateToCalculation}
-                  className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto whitespace-nowrap"
-                >
-                  {t("goToCalculator")}
-                </Button>
+                <div>
+                  <h3 className="text-gray-900 mb-1">{t("createNewCollection")}</h3>
+                  <p className="text-gray-600">{t("createNewCollectionDesc")}</p>
+                </div>
               </div>
-            </CardContent>
-          </Card>
-        )
-      }
+              <Button 
+                onClick={onNavigateToCalculation}
+                className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto whitespace-nowrap"
+              >
+                {t("goToCalculator")}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
+      {/* 👇 4. Dynamic Summary Cards 👇 */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-gray-600">{t("activeStations")}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-gray-900">42</div>
-            <p className="text-gray-500">{t("outOfTotal")}</p>
+            <div className="text-gray-900">{stats.activeStations}</div>
+            <p className="text-gray-500">{t("reportingData")}</p>
           </CardContent>
         </Card>
         <Card>
@@ -110,8 +169,8 @@ export function TaxCollectionPage({ userRole, onNavigateToCalculation }: TaxColl
             <CardTitle className="text-gray-600">{t("todaysCollection")}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-gray-900">MMK 8.9M</div>
-            <p className="text-green-600">{t("vsYesterday")}</p>
+            <div className="text-gray-900">{(stats.todaysCollection / 100000).toFixed(1)} Lakh</div>
+            <p className="text-green-600">{stats.todayCount} transactions today</p>
           </CardContent>
         </Card>
         <Card>
@@ -119,7 +178,8 @@ export function TaxCollectionPage({ userRole, onNavigateToCalculation }: TaxColl
             <CardTitle className="text-gray-600">{t("activeCollectors")}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-gray-900">128</div>
+            {/* Mocking the collectors count based on stations for now */}
+            <div className="text-gray-900">{stats.activeStations * 3}</div> 
             <p className="text-gray-500">{t("onDutyNow")}</p>
           </CardContent>
         </Card>
@@ -128,7 +188,7 @@ export function TaxCollectionPage({ userRole, onNavigateToCalculation }: TaxColl
             <CardTitle className="text-gray-600">{t("avgTransaction")}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-gray-900">MMK 245K</div>
+            <div className="text-gray-900">{(stats.avgTransaction / 100000).toFixed(1)} Lakh</div>
             <p className="text-gray-500">{t("perCollection")}</p>
           </CardContent>
         </Card>
@@ -146,72 +206,66 @@ export function TaxCollectionPage({ userRole, onNavigateToCalculation }: TaxColl
                 <TableRow>
                   <TableHead>{t("stationName")}</TableHead>
                   <TableHead>{t("taxType")}</TableHead>
-                  {/* Note: I reused todaysCollection instead of Todays Amount to keep it simple */}
-                  <TableHead>{t("todaysCollection")}</TableHead>
+                  <TableHead>Total Revenue</TableHead>
                   <TableHead>{t("activeCollectors")}</TableHead>
                   <TableHead>{t("status")}</TableHead>
                   <TableHead className="text-right">{t("action")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {collections.map((collection) => (
-                  <TableRow key={collection.id}>
-                    <TableCell>{collection.station}</TableCell>
-                    <TableCell>{collection.taxType}</TableCell>
-                    <TableCell>{collection.amount}</TableCell>
-                    <TableCell>{collection.collectors} collectors</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={collection.status === "Active" ? "default" : "secondary"}
-                        className={
-                          collection.status === "Active"
-                            ? "bg-green-100 text-green-800 hover:bg-green-100"
-                            : "bg-gray-100 text-gray-800 hover:bg-gray-100"
-                        }
-                      >
-                        {collection.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="sm">
-                        <Eye className="h-4 w-4 mr-1" />
-                        View {isReadOnly ? "" : "Details"}
-                      </Button>
+                {/* 👇 5. Loop over Live Data Instead of Hardcoded Data 👇 */}
+                {liveStations.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                      No stations found. Create a collection to register a station.
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  liveStations.map((station) => (
+                    <TableRow key={station.id}>
+                      <TableCell className="font-medium">{station.station}</TableCell>
+                      <TableCell>{station.taxType}</TableCell>
+                      <TableCell>{station.formattedAmount}</TableCell>
+                      <TableCell>{station.collectors} collectors</TableCell>
+                      <TableCell>
+                        <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+                          {station.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="sm">
+                          <Eye className="h-4 w-4 mr-1" />
+                          View {isReadOnly ? "" : "Details"}
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>
 
           {/* Mobile Card View */}
           <div className="md:hidden space-y-4">
-            {collections.map((collection) => (
-              <div key={collection.id} className="border rounded-lg p-4 space-y-3">
+            {liveStations.map((station) => (
+              <div key={station.id} className="border rounded-lg p-4 space-y-3">
                 <div className="flex items-start justify-between">
                   <div>
-                    <div className="text-gray-900">{collection.station}</div>
-                    <div className="text-gray-500">{collection.taxType}</div>
+                    <div className="text-gray-900 font-medium">{station.station}</div>
+                    <div className="text-gray-500 text-sm">{station.taxType}</div>
                   </div>
-                  <Badge
-                    variant={collection.status === "Active" ? "default" : "secondary"}
-                    className={
-                      collection.status === "Active"
-                        ? "bg-green-100 text-green-800 hover:bg-green-100"
-                        : "bg-gray-100 text-gray-800 hover:bg-gray-100"
-                    }
-                  >
-                    {collection.status}
+                  <Badge className="bg-green-100 text-green-800">
+                    {station.status}
                   </Badge>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
-                    <div className="text-gray-500">Today's Amount</div>
-                    <div className="text-gray-900">{collection.amount}</div>
+                    <div className="text-gray-500">Total Revenue</div>
+                    <div className="text-gray-900">{station.formattedAmount}</div>
                   </div>
                   <div>
                     <div className="text-gray-500">Collectors</div>
-                    <div className="text-gray-900">{collection.collectors} active</div>
+                    <div className="text-gray-900">{station.collectors} active</div>
                   </div>
                 </div>
                 <Button variant="outline" size="sm" className="w-full">
