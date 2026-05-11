@@ -4,6 +4,7 @@ import { Wifi, WifiOff, RefreshCw, Menu } from "lucide-react"; // Add these icon
 import { LanguageSwitcher } from "./LanguageSwitcher"; // Import LanguageSwitcher
 // 1. Import the hook
 import { useLanguage } from "../contexts/LanguageContext";
+import { Button } from "./ui/button";
 
 export function Header({ onMenuClick, currentUser, onLogout }: HeaderProps) {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
