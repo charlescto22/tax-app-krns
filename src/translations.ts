@@ -31,6 +31,13 @@ export const translations = {
     administrator: "Administrator",
     remittanceManager: "Remittance Manager",
     taxCollector: "Tax Collector",
+
+    // Header
+    online: "Online",
+    offline: "Offline",
+    sync: "Sync",
+    syncComplete: "Sync Complete! All records sent to server.",
+    syncConfirm: "Sync offline records to server now?",
   },
   mm: {
     // General
@@ -64,6 +71,13 @@ export const translations = {
     administrator: "အက်ဒမင်",
     remittanceManager: "ငွေစာရင်းမန်နေဂျာ",
     taxCollector: "အခွန်ကောက်ခံသူ",
+
+    // Header
+    online: "အွန်လိုင်း",
+    offline: "အော့ဖ်လိုင်း",
+    sync: "စင့်ခ်လုပ်မည်",
+    syncComplete: "စင့်ခ်လုပ်ခြင်း ပြီးဆုံးပါပြီ။ မှတ်တမ်းအားလုံးကို ဆာဗာသို့ ပေးပို့ပြီးပါပြီ။",
+    syncConfirm: "အော့ဖ်လိုင်းမှတ်တမ်းများကို ဆာဗာသို့ ယခု စင့်ခ်လုပ်မလား?",
   }
 };
 
