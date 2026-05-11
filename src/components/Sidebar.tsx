@@ -18,18 +18,7 @@ const getRoleBadgeColor = (role: UserRole): string => {
   }
 };
 
-const getRoleLabel = (role: UserRole): string => {
-  switch (role) {
-    case "administrator":
-      return "Administrator";
-    case "remittance-manager":
-      return "Remittance Manager";
-    case "tax-collector":
-      return "Tax Collector";
-    default:
-      return "User";
-  }
-};
+
 
 interface SidebarProps {
   activePage: string;
@@ -44,6 +33,19 @@ export function Sidebar({ activePage, onNavigate, isOpen, onClose, userRole, onL
   // 1. Get the translation function
   const { t } = useLanguage();
 
+  const getRoleLabel = (role: UserRole): string => {
+    switch (role) {
+      case "administrator":
+        return t("administrator");
+      case "remittance-manager":
+        return t("remittanceManager");
+      case "tax-collector":
+        return t("taxCollector");
+      default:
+        return "User";
+    }
+  };
+  
   // 2. Define navItems INSIDE the component so we can use 't'
   const navItems = [
     { icon: LayoutDashboard, label: t("dashboard"), id: "dashboard", roles: ["administrator"] },
@@ -78,7 +80,8 @@ export function Sidebar({ activePage, onNavigate, isOpen, onClose, userRole, onL
       >
         {/* Close button for mobile */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 lg:hidden">
-          <span className="text-gray-900">Menu</span>
+          {/* 👇 Change this line 👇 */}
+          <span className="text-gray-900">{t("menu")}</span>
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="h-5 w-5" />
           </Button>

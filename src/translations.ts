@@ -13,6 +13,7 @@ export const translations = {
     userManagement: "User Management",
     settings: "User Settings",
     logout: "Logout",
+    menu: "Menu",
     
     // Dashboard
     totalRevenue: "Total Revenue",
@@ -53,6 +54,7 @@ export const translations = {
     userManagement: "ဝန်ထမ်းစီမံခန့်ခွဲမှု",
     settings: "အကောင့်ဆက်တင်များ",
     logout: "ထွက်ရန်",
+    menu: "မီနူး",
     
     // Dashboard
     totalRevenue: "စုစုပေါင်းရငွေ",
