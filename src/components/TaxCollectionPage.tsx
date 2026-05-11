@@ -66,34 +66,34 @@ export function TaxCollectionPage({ userRole, onNavigateToCalculation }: TaxColl
           </Button>
         </div>
       )}
-    </div >
 
-      {/* Quick Action Card */ }
-  {
-    !isReadOnly && (
-      <Card className="border-blue-200 bg-blue-50/50 mb-6">
-        <CardContent className="pt-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-start gap-3">
-              <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
-                <Calculator className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                  <h3 className="text-gray-900 mb-1">{t("createNewCollection")}</h3>
-                  <p className="text-gray-600">{t("createNewCollectionDesc")}</p>
+
+      {/* Quick Action Card */}
+      {
+        !isReadOnly && (
+          <Card className="border-blue-200 bg-blue-50/50 mb-6">
+            <CardContent className="pt-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
+                    <Calculator className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-gray-900 mb-1">{t("createNewCollection")}</h3>
+                    <p className="text-gray-600">{t("createNewCollectionDesc")}</p>
+                  </div>
                 </div>
+                <Button
+                  onClick={onNavigateToCalculation}
+                  className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto whitespace-nowrap"
+                >
+                  {t("goToCalculator")}
+                </Button>
               </div>
-              <Button 
-                onClick={onNavigateToCalculation}
-                className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto whitespace-nowrap"
-              >
-                {t("goToCalculator")}
-              </Button>
-          </div>
-        </CardContent>
-      </Card>
-    )
-  }
+            </CardContent>
+          </Card>
+        )
+      }
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <Card>
