@@ -47,6 +47,22 @@ export const translations = {
     reportingData: "Reporting data",
     lakh: "Lakh",
     million: "M",
+
+    // Transaction Table
+    recentTransactions: "Recent Transactions",
+    recentTransactionsDesc: "Latest tax collection entries across all stations",
+    dateTime: "Date & Time",
+    taxType: "Tax Type",
+    stationName: "Station Name",
+    amount: "Amount",
+    status: "Status",
+    action: "Action",
+    noTransactions: "No transactions found.",
+    viewDetails: "View Details",
+    verify: "Verify",
+    reject: "Reject",
+    verifyConfirm: "Are you sure you want to VERIFY this transaction?",
+    rejectPrompt: "Please enter a reason for rejection:",
   },
   mm: {
     // General
@@ -96,6 +112,22 @@ export const translations = {
     reportingData: "ဒေတာပေးပို့နေသောဂိတ်များ",
     lakh: "သိန်း",
     million: "သန်း",
+
+    // Transaction Table
+    recentTransactions: "လတ်တလော စာရင်းများ",
+    recentTransactionsDesc: "ဂိတ်အားလုံးမှ နောက်ဆုံးရ အခွန်ကောက်ခံမှုစာရင်းများ",
+    dateTime: "ရက်စွဲ နှင့် အချိန်",
+    taxType: "အခွန်အမျိုးအစား",
+    stationName: "ဂိတ်အမည်",
+    amount: "ပမာဏ",
+    status: "အခြေအနေ",
+    action: "လုပ်ဆောင်ချက်",
+    noTransactions: "မှတ်တမ်း မရှိပါ။",
+    viewDetails: "အသေးစိတ်ကြည့်မည်။",
+    verify: "အတည်ပြုမည်။",
+    reject: "ငြင်းပယ်မည်။",
+    verifyConfirm: "ဤစာရင်းကို အတည်ပြုရန် သေချာပါသလား?",
+    rejectPrompt: "ငြင်းပယ်ရသည့် အကြောင်းရင်းကို ထည့်ပါ။",
   }
 };
 

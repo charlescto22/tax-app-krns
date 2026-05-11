@@ -8,6 +8,7 @@ import { UserRole } from "../App";
 // 1. Import Firestore tools
 import { db } from "../firebase";
 import { collection, onSnapshot, doc, updateDoc, query, orderBy } from "firebase/firestore";
+import { useLanguage } from "../contexts/LanguageContext";
 
 interface TransactionsTableProps {
   userRole?: UserRole;
@@ -15,6 +16,9 @@ interface TransactionsTableProps {
 
 export function TransactionsTable({ userRole }: TransactionsTableProps) {
   const [transactions, setTransactions] = useState<any[]>([]);
+
+  // 👇 1. Get the translate function 👇
+  const { t } = useLanguage();
 
   // 2. Connect to the Database (Real-time Listener)
   useEffect(() => {
@@ -35,7 +39,7 @@ export function TransactionsTable({ userRole }: TransactionsTableProps) {
 
   // 3. Approve Logic (Writes to Cloud)
   const handleApprove = async (id: string) => {
-    if (confirm("Are you sure you want to VERIFY this transaction?")) {
+    if (confirm(t("verifyConfirm"))) {
       const ref = doc(db, "transactions", id);
       try {
         await updateDoc(ref, { status: "Verified" });
@@ -48,7 +52,7 @@ export function TransactionsTable({ userRole }: TransactionsTableProps) {
 
   // 4. Reject Logic (Writes to Cloud)
   const handleReject = async (id: string) => {
-    const reason = prompt("Please enter a reason for rejection:");
+    const reason = prompt(t("rejectPrompt"));
     if (reason) {
       const ref = doc(db, "transactions", id);
       try {
@@ -66,8 +70,8 @@ export function TransactionsTable({ userRole }: TransactionsTableProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Recent Transactions</CardTitle>
-        <CardDescription>Latest tax collection entries across all stations</CardDescription>
+        <CardTitle>{t("recentTransactions")}</CardTitle>
+        <CardDescription>{t("recentTransactionsDesc")}</CardDescription>
       </CardHeader>
       <CardContent>
         {/* Desktop Table View */}
@@ -75,19 +79,19 @@ export function TransactionsTable({ userRole }: TransactionsTableProps) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Date & Time</TableHead>
-                <TableHead>Tax Type</TableHead>
-                <TableHead>Station Name</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Action</TableHead>
+                <TableHead>{t("dateTime")}</TableHead>
+                <TableHead>{t("taxType")}</TableHead>
+                <TableHead>{t("stationName")}</TableHead>
+                <TableHead>{t("amount")}</TableHead>
+                <TableHead>{t("status")}</TableHead>
+                <TableHead className="text-right">{t("action")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {transactions.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-8 text-gray-500">
-                    No transactions found.
+                    {t("noTransactions")}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -143,7 +147,7 @@ export function TransactionsTable({ userRole }: TransactionsTableProps) {
                       ) : (
                         <Button variant="ghost" size="sm">
                           <Eye className="h-4 w-4 mr-1" />
-                          View
+                          {t("viewDetails")}
                         </Button>
                       )}
                     </TableCell>
@@ -158,7 +162,7 @@ export function TransactionsTable({ userRole }: TransactionsTableProps) {
         <div className="md:hidden space-y-4">
           {transactions.length === 0 ? (
             <div className="text-center py-8 text-gray-500 border rounded-lg">
-              No transactions found.
+              {t("noTransactions")}
             </div>
           ) : (
             transactions.map((transaction) => (
@@ -188,11 +192,11 @@ export function TransactionsTable({ userRole }: TransactionsTableProps) {
                 
                 <div className="flex items-center justify-between text-sm">
                   <div>
-                    <div className="text-gray-500">Station</div>
+                    <div className="text-gray-500">{t("stationName")}</div>
                     <div className="text-gray-900">{transaction.station}</div>
                   </div>
                   <div className="text-right">
-                    <div className="text-gray-500">Amount</div>
+                    <div className="text-gray-500">{t("amount")}</div>
                     <div className="text-gray-900 font-medium">{transaction.amount}</div>
                   </div>
                 </div>
@@ -207,7 +211,7 @@ export function TransactionsTable({ userRole }: TransactionsTableProps) {
                         onClick={() => handleApprove(transaction.id)}
                       >
                         <Check className="h-4 w-4 mr-2" />
-                        Verify
+                        {t("verify")}
                       </Button>
                       <Button 
                         size="sm" 
@@ -216,13 +220,13 @@ export function TransactionsTable({ userRole }: TransactionsTableProps) {
                         onClick={() => handleReject(transaction.id)}
                       >
                         <X className="h-4 w-4 mr-2" />
-                        Reject
+                        {t("reject")}
                       </Button>
                     </>
                   ) : (
                     <Button variant="outline" size="sm" className="w-full">
                       <Eye className="h-4 w-4 mr-2" />
-                      View Details
+                      {t("viewDetails")}
                     </Button>
                   )}
                 </div>
