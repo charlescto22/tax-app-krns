@@ -39,6 +39,14 @@ export const translations = {
     sync: "Sync",
     syncComplete: "Sync Complete! All records sent to server.",
     syncConfirm: "Sync offline records to server now?",
+
+    // Metrics Cards
+    lifetimeCollection: "Lifetime Collection",
+    todaysRevenue: "Today's Revenue: ",
+    requiresVerification: "Requires verification",
+    reportingData: "Reporting data",
+    lakh: "Lakh",
+    million: "M",
   },
   mm: {
     // General
@@ -80,6 +88,14 @@ export const translations = {
     sync: "စင့်ခ်လုပ်မည်",
     syncComplete: "စင့်ခ်လုပ်ခြင်း ပြီးဆုံးပါပြီ။ မှတ်တမ်းအားလုံးကို ဆာဗာသို့ ပေးပို့ပြီးပါပြီ။",
     syncConfirm: "အော့ဖ်လိုင်းမှတ်တမ်းများကို ဆာဗာသို့ ယခု စင့်ခ်လုပ်မလား?",
+
+    // Metrics Cards
+    lifetimeCollection: "စုစုပေါင်း ကောက်ခံရရှိငွေ",
+    todaysRevenue: "ယနေ့ရငွေ: ",
+    requiresVerification: "စိစစ်ရန်လိုအပ်သည်",
+    reportingData: "ဒေတာပေးပို့နေသောဂိတ်များ",
+    lakh: "သိန်း",
+    million: "သန်း",
   }
 };
 

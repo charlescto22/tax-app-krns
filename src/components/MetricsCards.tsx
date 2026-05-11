@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { DollarSign, Activity, Clock, MapPin, Loader2 } from "lucide-react";
 import { db } from "../firebase";
 import { collection, query, onSnapshot, where } from "firebase/firestore";
+import { useLanguage } from "../contexts/LanguageContext";
 
 export function MetricsCards() {
   const [stats, setStats] = useState({
@@ -13,6 +14,9 @@ export function MetricsCards() {
     activeStations: 0
   });
   const [loading, setLoading] = useState(true);
+
+  // 👇 1. Get the translate function 👇
+  const { t } = useLanguage();
 
   useEffect(() => {
     // Listen to ALL transactions (In a large app, you might limit this to 'this month')
@@ -83,31 +87,31 @@ export function MetricsCards() {
 
   const metrics = [
     {
-      title: "Total Verified Revenue",
-      value: `MMK ${(stats.totalRevenue / 1000000).toFixed(2)}M`,
-      subtitle: "Lifetime Collection",
+      title: t("totalRevenue"), // From translations.ts
+      value: `MMK ${(stats.totalRevenue / 1000000).toFixed(2)}${t("million")}`,
+      subtitle: t("lifetimeCollection"),
       icon: DollarSign,
       color: "blue",
     },
     {
-      title: "Transactions Today",
+      title: t("transactionsToday"),
       value: stats.todayCount.toString(),
-      subtitle: `Today's Revenue: ${(stats.todayRevenue / 100000).toFixed(1)}Lakh`,
+      subtitle: `${t("todaysRevenue")} ${(stats.todayRevenue / 100000).toFixed(1)} ${t("lakh")}`,
       icon: Activity,
       color: "green",
     },
     {
-      title: "Pending Approvals",
+      title: t("pendingApprovals"),
       value: stats.pendingCount.toString(),
-      subtitle: "Requires verification",
+      subtitle: t("requiresVerification"),
       icon: Clock,
       color: "orange",
       alert: stats.pendingCount > 0
     },
     {
-      title: "Active Stations",
+      title: t("activeStations"),
       value: stats.activeStations.toString(),
-      subtitle: "Reporting data",
+      subtitle: t("reportingData"),
       icon: MapPin,
       color: "purple",
     },
