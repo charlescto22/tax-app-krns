@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Wifi, WifiOff, RefreshCw } from "lucide-react"; // Add these icons
+import { Wifi, WifiOff, RefreshCw, Menu } from "lucide-react"; // Add these icons
 // ... existing imports
 import { LanguageSwitcher } from "./LanguageSwitcher"; // Import LanguageSwitcher
 // 1. Import the hook
@@ -47,7 +47,28 @@ export function Header({ onMenuClick, currentUser, onLogout }: HeaderProps) {
     <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
       <div className="flex items-center justify-between px-4 lg:px-6 h-16">
 
-        {/* ... Logo & Menu ... */}
+        {/* 👇 1. LEFT SIDE: Menu Button + Logo 👇 */}
+        <div className="flex items-center gap-2">
+
+          {/* THE MISSING MENU BUTTON */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="lg:hidden" /* This ensures it ONLY shows on mobile/tablet */
+            onClick={onMenuClick} /* This opens the sidebar! */
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+
+          {/* Your existing IEC Logo */}
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center">
+              <span className="text-white text-xs font-bold">IEC</span>
+            </div>
+            {/* If you translated the app name, it will use t("appName") here */}
+            <span className="font-bold text-gray-900 hidden sm:inline">{t("appName")}</span>
+          </div>
+        </div>
 
         <div className="flex items-center gap-2 mr-2">
           <LanguageSwitcher />
