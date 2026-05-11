@@ -16,6 +16,7 @@ import { ReportsPage } from "./components/ReportsPage";
 import { SettingsPage } from "./components/SettingsPage";
 import { UserManagementPage } from "./components/UserManagementPage";
 import { AdminSeeder } from "./components/AdminSeeder";
+import { useLanguage } from "./contexts/LanguageContext";
 
 // User roles
 export type UserRole = "administrator" | "remittance-manager" | "tax-collector";
@@ -37,6 +38,7 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [lastActivity, setLastActivity] = useState(Date.now());
   const throttleTimer = useRef(Date.now());
+  const { t } = useLanguage();
 
   // Session timeout monitoring
   useEffect(() => {
@@ -193,8 +195,8 @@ export default function App() {
         return (
           <>
             <div>
-              <h1 className="text-gray-900 mb-2">Dashboard Overview</h1>
-              <p className="text-gray-600">Monitor tax collection and revenue across all departments</p>
+              <h1 className="text-gray-900 mb-2">{t("dashboardOverview")}</h1>
+           <p className="text-gray-600">{t("dashboardDesc")}</p>
             </div>
             
             <MetricsCards />

@@ -4,6 +4,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recha
 import { db } from "../firebase";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { Loader2 } from "lucide-react";
+import { useLanguage } from "../contexts/LanguageContext";
 
 const COLORS = ["#2563eb", "#3b82f6", "#60a5fa", "#93c5fd", "#dbeafe", "#1e40af", "#1e3a8a"];
 
@@ -11,6 +12,7 @@ export function TaxDistributionChart() {
   const [data, setData] = useState<{ name: string; value: number; percentage: number }[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalRevenue, setTotalRevenue] = useState(0);
+  const { t } = useLanguage();
 
   useEffect(() => {
     // Query only Verified transactions
@@ -63,8 +65,8 @@ export function TaxDistributionChart() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Tax Type Distribution</CardTitle>
-        <CardDescription>Breakdown of verified revenue by category</CardDescription>
+        <CardTitle>{t("taxDistribution")}</CardTitle>
+        <CardDescription>{t("taxDistributionDesc")}</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="h-64 sm:h-80">
@@ -85,12 +87,12 @@ export function TaxDistributionChart() {
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip 
+                <Tooltip
                   formatter={(value: number) => [`MMK ${(value / 1000000).toFixed(2)}M`, 'Revenue']}
                   contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '6px' }}
                 />
-                <Legend 
-                  verticalAlign="bottom" 
+                <Legend
+                  verticalAlign="bottom"
                   height={36}
                   formatter={(value) => <span className="text-gray-700 text-xs sm:text-sm">{value}</span>}
                 />
@@ -98,18 +100,18 @@ export function TaxDistributionChart() {
             </ResponsiveContainer>
           ) : (
             <div className="h-full flex flex-col items-center justify-center text-gray-400">
-               <p>No verified data available</p>
+              <p>No verified data available</p>
             </div>
           )}
         </div>
-        
+
         {/* List View below chart */}
         <div className="mt-4 space-y-2 max-h-40 overflow-y-auto pr-2">
           {data.map((item, index) => (
             <div key={item.name} className="flex items-center justify-between text-gray-600">
               <div className="flex items-center gap-2">
-                <div 
-                  className="w-3 h-3 rounded-full shrink-0" 
+                <div
+                  className="w-3 h-3 rounded-full shrink-0"
                   style={{ backgroundColor: COLORS[index % COLORS.length] }}
                 ></div>
                 <span className="text-sm truncate max-w-[120px] sm:max-w-none">{item.name}</span>

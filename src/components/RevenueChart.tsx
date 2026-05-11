@@ -4,10 +4,12 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { db } from "../firebase";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { Loader2 } from "lucide-react";
+import { useLanguage } from "../contexts/LanguageContext";
 
 export function RevenueChart() {
   const [data, setData] = useState<{ name: string; revenue: number }[]>([]);
   const [loading, setLoading] = useState(true);
+  const { t } = useLanguage();
 
   useEffect(() => {
     // Query only Verified transactions to ensure accurate revenue reporting
@@ -57,36 +59,36 @@ export function RevenueChart() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Revenue by Tax Type</CardTitle>
-        <CardDescription>Total verified collection amount (MMK)</CardDescription>
+        <CardTitle>{t("revenueOverview")}</CardTitle>
+        <CardDescription>{t("revenueDesc")}</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="h-64 sm:h-80">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis 
-                dataKey="name" 
+              <XAxis
+                dataKey="name"
                 tick={{ fill: '#6b7280', fontSize: 11 }}
                 interval={0} // Show all labels
                 angle={-15}
                 textAnchor="end"
                 height={60}
               />
-              <YAxis 
+              <YAxis
                 tick={{ fill: '#6b7280', fontSize: 11 }}
                 tickFormatter={(value) => `${(value / 1000000).toFixed(1)}M`}
               />
-              <Tooltip 
+              <Tooltip
                 formatter={(value: number) => [`MMK ${(value / 1000000).toFixed(2)}M`, 'Revenue']}
                 contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '6px' }}
               />
               <Legend />
-              <Bar 
-                dataKey="revenue" 
-                fill="#2563eb" 
-                radius={[4, 4, 0, 0]} 
-                name="Revenue (MMK)" 
+              <Bar
+                dataKey="revenue"
+                fill="#2563eb"
+                radius={[4, 4, 0, 0]}
+                name="Revenue (MMK)"
               />
             </BarChart>
           </ResponsiveContainer>

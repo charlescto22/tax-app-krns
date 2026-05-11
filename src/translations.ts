@@ -20,6 +20,12 @@ export const translations = {
     transactionsToday: "Transactions Today",
     pendingApprovals: "Pending Approvals",
     activeStations: "Active Stations",
+    dashboardOverview: "Dashboard Overview",
+    dashboardDesc: "Monitor tax collection and revenue across all departments",
+    revenueOverview: "Revenue Overview",
+    revenueDesc: "Monthly tax collection comparison",
+    taxDistribution: "Tax Distribution",
+    taxDistributionDesc: "Collection by tax type",
     
     // Actions
     save: "Save",
@@ -85,6 +91,12 @@ export const translations = {
     transactionsToday: "ယနေ့စာရင်းများ",
     pendingApprovals: "စိစစ်ရန်ကျန်",
     activeStations: "လက်ရှိဂိတ်များ",
+    dashboardOverview: "ပင်မစာမျက်နှာ အနှစ်ချုပ်",
+    dashboardDesc: "ဌာနအားလုံးရှိ အခွန်ကောက်ခံမှုနှင့် ရငွေများကို စောင့်ကြည့်ရန်",
+    revenueOverview: "ရငွေ အနှစ်ချုပ်",
+    revenueDesc: "လစဉ် အခွန်ကောက်ခံမှု နှိုင်းယှဉ်ချက်",
+    taxDistribution: "အခွန် ခွဲဝေမှု",
+    taxDistributionDesc: "အခွန်အမျိုးအစားအလိုက် ကောက်ခံမှု",
     
     // Actions
     save: "သိမ်းဆည်းမည်",
