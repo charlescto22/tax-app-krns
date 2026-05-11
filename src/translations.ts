@@ -69,6 +69,26 @@ export const translations = {
     reject: "Reject",
     verifyConfirm: "Are you sure you want to VERIFY this transaction?",
     rejectPrompt: "Please enter a reason for rejection:",
+
+    // Tax Collection Page
+    taxCollectionDescAdmin: "Manage tax collection stations and daily operations",
+    taxCollectionDescUser: "View tax collection stations and operations",
+    viewOnly: "View Only - Limited Access",
+    filter: "Filter",
+    newCollection: "New Collection",
+    new: "New",
+    createNewCollection: "Create New Tax Collection",
+    createNewCollectionDesc: "Use the Tax Calculation tool to create a new collection record with automatic calculations",
+    goToCalculator: "Go to Tax Calculator",
+    outOfTotal: "Out of 45 total",
+    vsYesterday: "+15% vs yesterday",
+    onDutyNow: "On duty now",
+    avgTransaction: "Avg. Transaction",
+    perCollection: "Per collection",
+    collectionStations: "Collection Stations",
+    collectionStationsDesc: "Active tax collection points across all regions",
+    todaysCollection: "Today's Collection",
+    activeCollectors: "Active Collectors",
   },
   mm: {
     // General
@@ -140,6 +160,26 @@ export const translations = {
     reject: "ငြင်းပယ်မည်။",
     verifyConfirm: "ဤစာရင်းကို အတည်ပြုရန် သေချာပါသလား?",
     rejectPrompt: "ငြင်းပယ်ရသည့် အကြောင်းရင်းကို ထည့်ပါ။",
+
+    // Tax Collection Page
+    taxCollectionDescAdmin: "အခွန်ကောက်ခံသည့် ဂိတ်များနှင့် နေ့စဉ်လုပ်ငန်းစဉ်များကို စီမံရန်",
+    taxCollectionDescUser: "အခွန်ကောက်ခံသည့် ဂိတ်များနှင့် လုပ်ငန်းစဉ်များကို ကြည့်ရှုရန်",
+    viewOnly: "ကြည့်ရှုရန်သာ - ကန့်သတ်ထားသော ဝင်ရောက်ခွင့်",
+    filter: "စစ်ထုတ်မည်",
+    newCollection: "စာရင်းသစ်သွင်းမည်",
+    new: "အသစ်",
+    createNewCollection: "အခွန်ကောက်ခံမှု စာရင်းသစ်ဖန်တီးရန်",
+    createNewCollectionDesc: "အခွန်တွက်ချက်မှုစနစ်ကို အသုံးပြု၍ အလိုအလျောက် တွက်ချက်မှုများနှင့်အတူ မှတ်တမ်းအသစ်ဖန်တီးပါ",
+    goToCalculator: "အခွန်တွက်ချက်ရန် သွားမည်",
+    outOfTotal: "စုစုပေါင်း ၄၅ ခုအနက်",
+    vsYesterday: "မနေ့ကထက် +၁၅%",
+    onDutyNow: "ယခု တာဝန်ထမ်းဆောင်နေသူ",
+    avgTransaction: "ပျမ်းမျှ ကောက်ခံရငွေ",
+    perCollection: "တစ်ကြိမ် ကောက်ခံမှုအတွက်",
+    collectionStations: "အခွန်ကောက်ခံသည့် ဂိတ်များ",
+    collectionStationsDesc: "ဒေသအားလုံးရှိ လက်ရှိ အခွန်ကောက်ခံနေသော နေရာများ",
+    todaysCollection: "ယနေ့ ကောက်ခံရငွေ",
+    activeCollectors: "လက်ရှိ ကောက်ခံနေသူများ",
   }
 };
 

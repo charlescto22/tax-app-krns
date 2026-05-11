@@ -6,6 +6,7 @@ import { Plus, Download, Filter, Eye, Lock, Calculator } from "lucide-react";
 import type { UserRole } from "../App";
 import { useState } from "react";
 import { TaxPayerForm } from "./TaxPayerForm";
+import { useLanguage } from "../contexts/LanguageContext";
 
 const collections = [
   { id: "1", station: "Pasaela Gate", taxType: "Commercial Tax", amount: "MMK 1,245,000", collectors: 3, status: "Active" },
@@ -23,130 +24,133 @@ interface TaxCollectionPageProps {
 export function TaxCollectionPage({ userRole, onNavigateToCalculation }: TaxCollectionPageProps) {
   const isReadOnly = userRole === "remittance-manager";
   const [showTaxPayerForm, setShowTaxPayerForm] = useState(false);
-  
+
+  const { t } = useLanguage();
+
   // If showing the tax payer form, render it instead of the main view
   if (showTaxPayerForm) {
     return <TaxPayerForm onBack={() => setShowTaxPayerForm(false)} />;
   }
-  
+
   return (
     <>
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-gray-900 mb-2">Tax Collection</h1>
-          <p className="text-gray-600">
-            {isReadOnly ? "View tax collection stations and operations" : "Manage tax collection stations and daily operations"}
-          </p>
-          {isReadOnly && (
-            <div className="flex items-center gap-2 mt-2">
-              <Lock className="h-4 w-4 text-orange-600" />
-              <span className="text-orange-600">View Only - Limited Access</span>
-            </div>
-          )}
-        </div>
-        {!isReadOnly && (
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" className="flex-1 sm:flex-none">
-              <Filter className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">Filter</span>
-            </Button>
-            <Button variant="outline" className="flex-1 sm:flex-none">
-              <Download className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">Export</span>
-            </Button>
-            <Button 
-              className="bg-blue-600 hover:bg-blue-700 flex-1 sm:flex-none"
-              onClick={onNavigateToCalculation}
-            >
-              <Calculator className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">New Collection</span>
-              <span className="sm:hidden">New</span>
-            </Button>
+      <div>
+        <h1 className="text-gray-900 mb-2">{t("taxCollection")}</h1>
+        <p className="text-gray-600">
+          {isReadOnly ? t("taxCollectionDescUser") : t("taxCollectionDescAdmin")}
+        </p>
+        {isReadOnly && (
+          <div className="flex items-center gap-2 mt-2">
+            <Lock className="h-4 w-4 text-orange-600" />
+            <span className="text-orange-600">{t("viewOnly")}</span>
           </div>
         )}
       </div>
-
-      {/* Quick Action Card */}
       {!isReadOnly && (
-        <Card className="border-blue-200 bg-blue-50/50 mb-6">
-          <CardContent className="pt-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="flex items-start gap-3">
-                <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
-                  <Calculator className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-gray-900 mb-1">Create New Tax Collection</h3>
-                  <p className="text-gray-600">Use the Tax Calculation tool to create a new collection record with automatic calculations</p>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" className="flex-1 sm:flex-none">
+            <Filter className="h-4 w-4 mr-2" />
+            <span className="hidden sm:inline">{t("filter")}</span>
+          </Button>
+          <Button variant="outline" className="flex-1 sm:flex-none">
+            <Download className="h-4 w-4 mr-2" />
+            <span className="hidden sm:inline">{t("export")}</span>
+          </Button>
+          <Button
+            className="bg-blue-600 hover:bg-blue-700 flex-1 sm:flex-none"
+            onClick={onNavigateToCalculation}
+          >
+            <Calculator className="h-4 w-4 mr-2" />
+            <span className="hidden sm:inline">{t("newCollection")}</span>
+            <span className="sm:hidden">{t("new")}</span>
+          </Button>
+        </div>
+      )}
+    </div >
+
+      {/* Quick Action Card */ }
+  {
+    !isReadOnly && (
+      <Card className="border-blue-200 bg-blue-50/50 mb-6">
+        <CardContent className="pt-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
+                <Calculator className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                  <h3 className="text-gray-900 mb-1">{t("createNewCollection")}</h3>
+                  <p className="text-gray-600">{t("createNewCollectionDesc")}</p>
                 </div>
               </div>
               <Button 
                 onClick={onNavigateToCalculation}
                 className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto whitespace-nowrap"
               >
-                Go to Tax Calculator
+                {t("goToCalculator")}
               </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-gray-600">Active Stations</CardTitle>
+            <CardTitle className="text-gray-600">{t("activeStations")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-gray-900">42</div>
-            <p className="text-gray-500">Out of 45 total</p>
+            <p className="text-gray-500">{t("outOfTotal")}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-gray-600">Today's Collection</CardTitle>
+            <CardTitle className="text-gray-600">{t("todaysCollection")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-gray-900">MMK 8.9M</div>
-            <p className="text-green-600">+15% vs yesterday</p>
+            <p className="text-green-600">{t("vsYesterday")}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-gray-600">Active Collectors</CardTitle>
+            <CardTitle className="text-gray-600">{t("activeCollectors")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-gray-900">128</div>
-            <p className="text-gray-500">On duty now</p>
+            <p className="text-gray-500">{t("onDutyNow")}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-gray-600">Avg. Transaction</CardTitle>
+            <CardTitle className="text-gray-600">{t("avgTransaction")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-gray-900">MMK 245K</div>
-            <p className="text-gray-500">Per collection</p>
+            <p className="text-gray-500">{t("perCollection")}</p>
           </CardContent>
         </Card>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Collection Stations</CardTitle>
-          <CardDescription>Active tax collection points across all regions</CardDescription>
+          <CardTitle>{t("collectionStations")}</CardTitle>
+          <CardDescription>{t("collectionStationsDesc")}</CardDescription>
         </CardHeader>
         <CardContent>
-          {/* Desktop Table View */}
           <div className="hidden md:block overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Station Name</TableHead>
-                  <TableHead>Tax Type</TableHead>
-                  <TableHead>Today's Amount</TableHead>
-                  <TableHead>Active Collectors</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>{t("stationName")}</TableHead>
+                  <TableHead>{t("taxType")}</TableHead>
+                  {/* Note: I reused todaysCollection instead of Todays Amount to keep it simple */}
+                  <TableHead>{t("todaysCollection")}</TableHead>
+                  <TableHead>{t("activeCollectors")}</TableHead>
+                  <TableHead>{t("status")}</TableHead>
+                  <TableHead className="text-right">{t("action")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
