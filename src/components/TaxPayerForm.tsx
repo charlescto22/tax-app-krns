@@ -8,6 +8,7 @@ import { Label } from "./ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Textarea } from "./ui/textarea";
 import { ArrowLeft, Save, User, Building2, MapPin, FileText } from "lucide-react";
+import { useLanguage } from "../contexts/LanguageContext";
 
 interface TaxPayerFormProps {
   onBack: () => void;
@@ -33,6 +34,28 @@ export function TaxPayerForm({ onBack }: TaxPayerFormProps) {
     remarks: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { t } = useLanguage();
+
+  // Helper to generate the receipt number based on tax type
+  const generateReceiptNumber = (taxType: string) => {
+    if (!taxType) return "";
+    
+    // Map tax types to a 3-letter prefix
+    const prefixMap: Record<string, string> = {
+      commercial: "COM",
+      customs: "CUS",
+      property: "PRP",
+      land: "LND",
+      road: "ROD",
+      excise: "EXC",
+    };
+    
+    const prefix = prefixMap[taxType] || "TAX";
+    const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, ''); // e.g. 20260512
+    const randomId = Math.floor(1000 + Math.random() * 9000); // 4-digit random number
+    
+    return `${prefix}-${dateStr}-${randomId}`;
+  };
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => {
@@ -45,38 +68,40 @@ export function TaxPayerForm({ onBack }: TaxPayerFormProps) {
         updated.calculatedTax = (amount * rate / 100).toFixed(2);
       }
 
+      // Auto-generate receipt number if tax type changes
+      if (field === "taxType") {
+        updated.receiptNumber = generateReceiptNumber(value);
+      }
+
       return updated;
     });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true); // Disable the button while saving
+    setIsSubmitting(true);
 
     try {
-      // 1. Get today's date in YYYY-MM-DD format so the MetricsCard can count it as "Today"
       const todayStr = new Date().toISOString().split('T')[0];
 
-      // 2. Prepare the exact data structure Firebase needs
       const transactionData = {
-        ...formData, // Keep all the detailed form data (name, address, etc.)
-        amount: parseFloat(formData.calculatedTax) || 0, // The MetricsCard looks for 'amount' as a number
-        date: todayStr, // The MetricsCard looks for 'date'
-        station: formData.collectionStation, // The MetricsCard looks for 'station'
-        status: "Verified", // Set to Verified so it counts towards Total Revenue immediately
-        createdAt: new Date().toISOString() // Good practice to have an exact timestamp
+        ...formData,
+        amount: parseFloat(formData.calculatedTax) || 0,
+        date: todayStr,
+        station: formData.collectionStation,
+        status: "Verified",
+        createdAt: new Date().toISOString()
       };
 
-      // 3. Send it to the "transactions" collection in Firestore
       await addDoc(collection(db, "transactions"), transactionData);
 
-      alert("Tax collection record saved to database successfully!");
-      onBack(); // Send the user back to the table
+      alert(`✅ ${t("saveSuccess")}`);
+      onBack();
     } catch (error) {
       console.error("Error adding document: ", error);
-      alert("Failed to save record to database. Please check your connection.");
+      alert(`❌ ${t("saveError")}`);
     } finally {
-      setIsSubmitting(false); // Re-enable the button
+      setIsSubmitting(false);
     }
   };
 
@@ -85,13 +110,13 @@ export function TaxPayerForm({ onBack }: TaxPayerFormProps) {
       <div className="flex items-center gap-4">
         <Button variant="outline" size="sm" onClick={onBack}>
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Collections
+          {t("backToCollections")}
         </Button>
       </div>
 
       <div>
-        <h1 className="text-gray-900 mb-2">Tax Payer Registration Form</h1>
-        <p className="text-gray-600">Create a new tax collection record</p>
+        <h1 className="text-gray-900 mb-2">{t("taxPayerRegistrationForm")}</h1>
+        <p className="text-gray-600">{t("taxCalculatorDesc")}</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -100,41 +125,41 @@ export function TaxPayerForm({ onBack }: TaxPayerFormProps) {
           <CardHeader>
             <div className="flex items-center gap-2">
               <User className="h-5 w-5 text-blue-600" />
-              <CardTitle>Tax Payer Information</CardTitle>
+              <CardTitle>{t("taxPayerInformation")}</CardTitle>
             </div>
-            <CardDescription>Basic information about the tax payer</CardDescription>
+            <CardDescription>{t("taxPayerInformationDesc")}</CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="taxpayerName">Tax Payer Name *</Label>
+              <Label htmlFor="taxpayerName">{t("taxPayerName")}</Label>
               <Input
                 id="taxpayerName"
-                placeholder="Enter full name"
+                placeholder={t("taxPayerNamePlaceholder")}
                 value={formData.taxpayerName}
                 onChange={(e) => handleInputChange("taxpayerName", e.target.value)}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="taxpayerType">Tax Payer Type *</Label>
+              <Label htmlFor="taxpayerType">{t("taxPayerType")}</Label>
               <Select
                 value={formData.taxpayerType}
                 onValueChange={(value) => handleInputChange("taxpayerType", value)}
                 required
               >
                 <SelectTrigger id="taxpayerType">
-                  <SelectValue placeholder="Select type" />
+                  <SelectValue placeholder={t("selectTaxPayerType")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="individual">Individual</SelectItem>
-                  <SelectItem value="company">Company</SelectItem>
-                  <SelectItem value="partnership">Partnership</SelectItem>
-                  <SelectItem value="government">Government Entity</SelectItem>
+                  <SelectItem value="individual">{t("individual")}</SelectItem>
+                  <SelectItem value="company">{t("company")}</SelectItem>
+                  <SelectItem value="partnership">{t("partnership")}</SelectItem>
+                  <SelectItem value="government">{t("government")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="nrcOrRegistration">NRC / Registration No. *</Label>
+              <Label htmlFor="nrcOrRegistration">{t("nrcOrRegistration")}</Label>
               <Input
                 id="nrcOrRegistration"
                 placeholder="e.g., 12/OUKAMA(N)123456"
@@ -144,7 +169,7 @@ export function TaxPayerForm({ onBack }: TaxPayerFormProps) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="phoneNumber">Phone Number *</Label>
+              <Label htmlFor="phoneNumber">{t("phoneNumber")}</Label>
               <Input
                 id="phoneNumber"
                 type="tel"
@@ -155,7 +180,7 @@ export function TaxPayerForm({ onBack }: TaxPayerFormProps) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
+              <Label htmlFor="email">{t("email")}</Label>
               <Input
                 id="email"
                 type="email"
@@ -172,16 +197,16 @@ export function TaxPayerForm({ onBack }: TaxPayerFormProps) {
           <CardHeader>
             <div className="flex items-center gap-2">
               <MapPin className="h-5 w-5 text-blue-600" />
-              <CardTitle>Address Information</CardTitle>
+              <CardTitle>{t("addressInformation")}</CardTitle>
             </div>
-            <CardDescription>Location details of the tax payer</CardDescription>
+            <CardDescription>{t("addressInformationDesc")}</CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="address">Address *</Label>
+              <Label htmlFor="address">{t("address")}</Label>
               <Textarea
                 id="address"
-                placeholder="Enter complete address"
+                placeholder={t("addressPlaceholder")}
                 value={formData.address}
                 onChange={(e) => handleInputChange("address", e.target.value)}
                 required
@@ -189,41 +214,52 @@ export function TaxPayerForm({ onBack }: TaxPayerFormProps) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="township">Township *</Label>
+              <Label htmlFor="township">{t("township")}</Label>
               <Select
                 value={formData.township}
                 onValueChange={(value) => handleInputChange("township", value)}
                 required
               >
                 <SelectTrigger id="township">
-                  <SelectValue placeholder="Select township" />
+                  <SelectValue placeholder={t("selectTownship")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="yangon-downtown">Yangon Downtown</SelectItem>
-                  <SelectItem value="north-okkalapa">North Okkalapa</SelectItem>
-                  <SelectItem value="south-okkalapa">South Okkalapa</SelectItem>
-                  <SelectItem value="hlaing">Hlaing</SelectItem>
-                  <SelectItem value="kamayut">Kamayut</SelectItem>
-                  <SelectItem value="dagon">Dagon</SelectItem>
+                  <SelectItem value="deemawhso">{t("deemawhso")}</SelectItem>
+                  <SelectItem value="deebaungkhu">{t("deebaungkhu")}</SelectItem>
+                  <SelectItem value="hoyo">{t("hoyo")}</SelectItem>
+                  <SelectItem value="hubaw">{t("hubaw")}</SelectItem>
+                  <SelectItem value="kaylyar">{t("kaylyar")}</SelectItem>
+                  <SelectItem value="hsomo_phayhsoelay">{t("hsomo_phayhsoelay")}</SelectItem>
+                  <SelectItem value="lomukho">{t("lomukho")}</SelectItem>
+                  <SelectItem value="loinanpha">{t("loinanpha")}</SelectItem>
+                  <SelectItem value="loikaw">{t("loikaw")}</SelectItem>
+                  <SelectItem value="melse">{t("melse")}</SelectItem>
+                  <SelectItem value="nanmakhon">{t("nanmakhon")}</SelectItem>
+                  <SelectItem value="paulwart">{t("paulwart")}</SelectItem>
+                  <SelectItem value="phunbawkhun">{t("phunbawkhun")}</SelectItem>
+                  <SelectItem value="pekhon">{t("pekhon")}</SelectItem>
+                  <SelectItem value="sotashar">{t("sotashar")}</SelectItem>
+                  <SelectItem value="ywarthit">{t("ywarthit")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="state">State/Region *</Label>
+              <Label htmlFor="state">{t("stateRegion")}</Label>
               <Select
                 value={formData.state}
                 onValueChange={(value) => handleInputChange("state", value)}
                 required
               >
                 <SelectTrigger id="state">
-                  <SelectValue placeholder="Select state/region" />
+                  <SelectValue placeholder={t("selectStateRegion")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="yangon">Yangon Region</SelectItem>
-                  <SelectItem value="mandalay">Mandalay Region</SelectItem>
-                  <SelectItem value="shan">Shan State</SelectItem>
-                  <SelectItem value="kachin">Kachin State</SelectItem>
-                  <SelectItem value="kayah">Kayah State</SelectItem>
+                  <SelectItem value="yangon">{t("yangon")}</SelectItem>
+                  <SelectItem value="mandalay">{t("mandalay")}</SelectItem>
+                  <SelectItem value="shan">{t("shan")}</SelectItem>
+                  <SelectItem value="kachin">{t("kachin")}</SelectItem>
+                  <SelectItem value="karenni">{t("karenni")}</SelectItem>
+                  <SelectItem value="karen">{t("karen")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -235,52 +271,52 @@ export function TaxPayerForm({ onBack }: TaxPayerFormProps) {
           <CardHeader>
             <div className="flex items-center gap-2">
               <FileText className="h-5 w-5 text-blue-600" />
-              <CardTitle>Tax Collection Details</CardTitle>
+              <CardTitle>{t("taxCollectionDetails")}</CardTitle>
             </div>
-            <CardDescription>Tax type and payment information</CardDescription>
+            <CardDescription>{t("taxTypeAndPaymentInfo")}</CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="taxType">Tax Type *</Label>
+              <Label htmlFor="taxType">{t("taxType")} *</Label>
               <Select
                 value={formData.taxType}
                 onValueChange={(value) => handleInputChange("taxType", value)}
                 required
               >
                 <SelectTrigger id="taxType">
-                  <SelectValue placeholder="Select tax type" />
+                  <SelectValue placeholder={t("selectTaxType")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="commercial">Commercial Tax</SelectItem>
-                  <SelectItem value="customs">Customs Duty</SelectItem>
-                  <SelectItem value="property">Property Tax</SelectItem>
-                  <SelectItem value="land">Land Tax</SelectItem>
-                  <SelectItem value="road">Road Tax</SelectItem>
-                  <SelectItem value="excise">Excise Tax</SelectItem>
+                  <SelectItem value="commercial">{t("commercialTax")}</SelectItem>
+                  <SelectItem value="customs">{t("customsDuty")}</SelectItem>
+                  <SelectItem value="property">{t("propertyTax")}</SelectItem>
+                  <SelectItem value="land">{t("landTax")}</SelectItem>
+                  <SelectItem value="road">{t("roadTax")}</SelectItem>
+                  <SelectItem value="excise">{t("exciseTax")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="collectionStation">Collection Station *</Label>
+              <Label htmlFor="collectionStation">{t("collectionStation")} *</Label>
               <Select
                 value={formData.collectionStation}
                 onValueChange={(value) => handleInputChange("collectionStation", value)}
                 required
               >
                 <SelectTrigger id="collectionStation">
-                  <SelectValue placeholder="Select station" />
+                  <SelectValue placeholder={t("selectStation")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="pasaela">Pasaela Gate</SelectItem>
-                  <SelectItem value="8mile">8-Mile Gate</SelectItem>
-                  <SelectItem value="central">Central District</SelectItem>
-                  <SelectItem value="township4">Township Office 4</SelectItem>
-                  <SelectItem value="border2">Border Checkpoint 2</SelectItem>
+                  <SelectItem value="pasaela">{t("pasaelaGate")}</SelectItem>
+                  <SelectItem value="8mile">{t("eightMileGate")}</SelectItem>
+                  <SelectItem value="central">{t("centralDistrict")}</SelectItem>
+                  <SelectItem value="township4">{t("townshipOffice4")}</SelectItem>
+                  <SelectItem value="border2">{t("borderCheckpoint2")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="taxableAmount">Taxable Amount (MMK) *</Label>
+              <Label htmlFor="taxableAmount">{t("taxableAmount")}</Label>
               <Input
                 id="taxableAmount"
                 type="number"
@@ -293,7 +329,7 @@ export function TaxPayerForm({ onBack }: TaxPayerFormProps) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="taxRate">Tax Rate (%) *</Label>
+              <Label htmlFor="taxRate">{t("taxRate")}</Label>
               <Input
                 id="taxRate"
                 type="number"
@@ -307,48 +343,48 @@ export function TaxPayerForm({ onBack }: TaxPayerFormProps) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="calculatedTax">Calculated Tax (MMK)</Label>
+              <Label htmlFor="calculatedTax">{t("calculatedTax")}</Label>
               <Input
                 id="calculatedTax"
                 type="text"
                 value={formData.calculatedTax}
                 readOnly
-                className="bg-gray-50"
+                className="bg-gray-50 font-semibold"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="paymentMethod">Payment Method *</Label>
+              <Label htmlFor="paymentMethod">{t("paymentMethod")}</Label>
               <Select
                 value={formData.paymentMethod}
                 onValueChange={(value) => handleInputChange("paymentMethod", value)}
                 required
               >
                 <SelectTrigger id="paymentMethod">
-                  <SelectValue placeholder="Select payment method" />
+                  <SelectValue placeholder={t("selectPaymentMethod")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="cash">Cash</SelectItem>
-                  <SelectItem value="bank-transfer">Bank Transfer</SelectItem>
-                  <SelectItem value="mobile-payment">Mobile Payment</SelectItem>
-                  <SelectItem value="cheque">Cheque</SelectItem>
+                  <SelectItem value="cash">{t("cash")}</SelectItem>
+                  <SelectItem value="bank-transfer">{t("bankTransfer")}</SelectItem>
+                  <SelectItem value="mobile-payment">{t("mobilePayment")}</SelectItem>
+                  <SelectItem value="cheque">{t("cheque")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="receiptNumber">Receipt Number *</Label>
+              <Label htmlFor="receiptNumber">{t("receiptNumber")}</Label>
               <Input
                 id="receiptNumber"
-                placeholder="e.g., RCP-2024-001234"
+                placeholder={t("receiptNumberPlaceholder")}
                 value={formData.receiptNumber}
-                onChange={(e) => handleInputChange("receiptNumber", e.target.value)}
-                required
+                readOnly
+                className="bg-gray-50 text-blue-700 font-bold tracking-wider"
               />
             </div>
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="remarks">Remarks / Notes</Label>
+              <Label htmlFor="remarks">{t("remarks")}</Label>
               <Textarea
                 id="remarks"
-                placeholder="Any additional notes or comments"
+                placeholder={t("remarksPlaceholder")}
                 value={formData.remarks}
                 onChange={(e) => handleInputChange("remarks", e.target.value)}
                 rows={3}
@@ -362,7 +398,7 @@ export function TaxPayerForm({ onBack }: TaxPayerFormProps) {
           <CardContent className="pt-6">
             <div className="flex flex-col sm:flex-row gap-3 justify-end">
               <Button type="button" variant="outline" onClick={onBack} className="w-full sm:w-auto">
-                Cancel
+                {t("cancel")}
               </Button>
               <Button
                 type="submit"
@@ -370,7 +406,7 @@ export function TaxPayerForm({ onBack }: TaxPayerFormProps) {
                 disabled={isSubmitting}
               >
                 <Save className="h-4 w-4 mr-2" />
-                {isSubmitting ? "Saving to Database..." : "Save Collection Record"}
+                {isSubmitting ? t("saving") : t("saveRecord")}
               </Button>
             </div>
           </CardContent>
