@@ -11,8 +11,8 @@ import { Alert, AlertDescription } from "./ui/alert";
 import { Textarea } from "./ui/textarea";
 
 // Import Firestore Tools
-import { db, auth } from "../firebase"; 
-import { collection, addDoc, doc, getDoc } from "firebase/firestore"; 
+import { db, auth } from "../firebase";
+import { collection, addDoc, doc, getDoc } from "firebase/firestore";
 
 // Import Printing Tools
 import { useReactToPrint } from "react-to-print";
@@ -63,12 +63,12 @@ interface TaxCalculationPageProps {
 // Helper for offline saving (PWA Feature)
 const saveOfflineRecord = (record: any) => {
   const existingQueue = JSON.parse(localStorage.getItem("offlineTaxQueue") || "[]");
-  const offlineRecord = { 
-    ...record, 
-    status: "Offline-Pending", 
-    synced: false 
+  const offlineRecord = {
+    ...record,
+    status: "Offline-Pending",
+    synced: false
   };
-  
+
   localStorage.setItem("offlineTaxQueue", JSON.stringify([...existingQueue, offlineRecord]));
   return offlineRecord;
 };
@@ -77,19 +77,19 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
   const [taxCategory, setTaxCategory] = useState("");
   const [calculationPath, setCalculationPath] = useState<"trade" | "road" | "land" | null>(null);
   const { t } = useLanguage();
-  
+
   // Path A: Trade & Customs
   const [goodsType, setGoodsType] = useState("");
   const [cargoValue, setCargoValue] = useState("");
   const [taxRate, setTaxRate] = useState("");
-  
+
   // Path B: Gate & Road Usage
   const [vehicleType, setVehicleType] = useState("");
-  
+
   // Path C: Land & Property
   const [landArea, setLandArea] = useState("");
   const [zoneType, setZoneType] = useState("");
-  
+
   // Common fields
   const [calculatedTax, setCalculatedTax] = useState(0);
   const [currency, setCurrency] = useState("MMK");
@@ -99,10 +99,42 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
   const [collectionStation, setCollectionStation] = useState("");
   const [remarks, setRemarks] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
-  
+
   // Permission State
   const [allowedTaxTypes, setAllowedTaxTypes] = useState<string[]>([]);
   const [isLoadingPermissions, setIsLoadingPermissions] = useState(true);
+
+  // Helper to generate the receipt number based on tax category AND station
+  const generateReceiptNumber = (category: string, station: string) => {
+    if (!category) return "";
+    
+    // 1. Get Tax Prefix
+    const prefixMap: Record<string, string> = {
+      "commercial": "COM", "customs": "CUS", "import-export": "IMP",
+      "road": "ROD", "bridge": "BRG", "land": "LND",
+      "irrigation": "IRR", "agriculture": "AGR",
+    };
+    const taxPrefix = prefixMap[category] || "TAX";
+
+    // 2. Get Station Prefix
+    const stationMap: Record<string, string> = {
+      "pasaela": "PSL", "8mile": "8MI", "central": "CEN",
+      "township4": "TS4", "border2": "BD2",
+    };
+    const stationPrefix = stationMap[station] || "UNK";
+    
+    // 3. Get Date
+    const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, ''); 
+    
+    // 4. Generate 5-character alphanumeric secure random string
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let randomString = '';
+    for (let i = 0; i < 5; i++) {
+      randomString += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    
+    return `${taxPrefix}-${stationPrefix}-${dateStr}-${randomString}`;
+  };
 
   // Ref for printing
   const receiptRef = useRef<HTMLDivElement>(null);
@@ -111,7 +143,7 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
   useEffect(() => {
     const fetchPermissions = async () => {
       if (!auth.currentUser) return;
-      
+
       try {
         const userDoc = await getDoc(doc(db, "users", auth.currentUser.uid));
         if (userDoc.exists()) {
@@ -122,7 +154,7 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
             setAllowedTaxTypes(userData.allowedTaxTypes || []);
           }
           if (userData.station) {
-             setCollectionStation(userData.station);
+            setCollectionStation(userData.station);
           }
         }
       } catch (error) {
@@ -148,7 +180,13 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
     }
     setCalculatedTax(0);
     setErrors({});
-  }, [taxCategory]);
+  // 👇 UPGRADE: Now it requires both Category AND Station to generate the final receipt
+    if (taxCategory && collectionStation) {
+      setReceiptNumber(generateReceiptNumber(taxCategory, collectionStation));
+    } else {
+      setReceiptNumber(""); // Keep empty until both are selected
+    }
+  }, [taxCategory, collectionStation]);
 
   // Path A: Trade & Customs Calculation
   useEffect(() => {
@@ -245,22 +283,22 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
     setRemarks("");
     setErrors({});
     const timestamp = Date.now();
-    setReceiptNumber(`RCP-${timestamp.toString().slice(-8)}`);
+    setReceiptNumber("");
   };
 
-  const handleSave = async () => { 
+  const handleSave = async () => {
     if (validateForm()) {
-      const isOnline = navigator.onLine; 
-      
+      const isOnline = navigator.onLine;
+
       const record = {
-        date: new Date().toISOString().split('T')[0], 
+        date: new Date().toISOString().split('T')[0],
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         taxType: taxCategory,
         station: collectionStation,
         amount: `MMK ${calculatedTax.toLocaleString()}`,
         rawAmount: calculatedTax,
-        status: isOnline ? "Pending" : "Offline-Pending", 
-        
+        status: isOnline ? "Pending" : "Offline-Pending",
+
         details: {
           receiptNumber,
           taxpayerName,
@@ -275,7 +313,7 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
         createdAt: new Date().toISOString(),
         createdBy: auth.currentUser?.email || "Tax Collector"
       };
-      
+
       try {
         if (isOnline) {
           const docRef = await addDoc(collection(db, "transactions"), record);
@@ -305,7 +343,7 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
     cargoValue: calculationPath === "trade" ? cargoValue : undefined,
     vehicleType: calculationPath === "road" ? vehicleType : undefined,
     landArea: calculationPath === "land" ? landArea : undefined,
-    department: "Tax Department" 
+    department: "Tax Department"
   };
 
   const handlePrint = useReactToPrint({
@@ -364,7 +402,7 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="taxCategory">{t("taxCategory")} *</Label>
-            
+
             <Select value={taxCategory} onValueChange={setTaxCategory} disabled={isLoadingPermissions}>
               <SelectTrigger id="taxCategory">
                 <SelectValue placeholder={isLoadingPermissions ? t("loadingPermissions") : t("selectTaxCategory")} />
@@ -379,9 +417,9 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
                 }
               </SelectContent>
             </Select>
-            
+
             {allowedTaxTypes.length === 0 && !isLoadingPermissions && (
-               <p className="text-xs text-red-500 mt-1">{t("noPermissions")}</p>
+              <p className="text-xs text-red-500 mt-1">{t("noPermissions")}</p>
             )}
           </div>
 

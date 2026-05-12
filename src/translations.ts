@@ -253,6 +253,13 @@ export const translations = {
     tradeInfoDesc: "For commercial goods, imports, and exports",
     roadInfoDesc: "Fixed rates for vehicles on toll roads",
     landInfoDesc: "Based on land area and zone type",
+
+    // Missing Tax Calculation Keys
+    selectTaxCategory: "Select tax category...",
+    importExportTax: "Import/Export Tax",
+    bridgeTax: "Bridge Tax",
+    irrigationTax: "Irrigation Tax",
+    agricultureTax: "Agriculture Tax",
   },
   mm: {
     // General
@@ -370,7 +377,7 @@ export const translations = {
     exciseTax: "ယစ်မျိုးခွန်",
 
     // Station Names
-    pasaelaGate: "ပဆေလာဂိတ်",
+    pasaelaGate: "ပဆေးလာဂိတ်",
     eightMileGate: "၈-မိုင် ဂိတ်",
     centralDistrict: "ဗဟိုခရိုင်",
     townshipOffice4: "မြို့နယ်ရုံး ၄",
@@ -508,6 +515,13 @@ export const translations = {
     tradeInfoDesc: "စီးပွားရေးကုန်စည်များ၊ သွင်းကုန်/ပို့ကုန်များအတွက်",
     roadInfoDesc: "လမ်းအသုံးပြုသော ယာဉ်များအတွက် သတ်မှတ်နှုန်းထားများ",
     landInfoDesc: "မြေဧရိယာနှင့် ဇုန်အမျိုးအစားအပေါ် အခြေခံသည်",
+
+    // Missing Tax Calculation Keys
+    selectTaxCategory: "အခွန်အမျိုးအစား ရွေးချယ်ပါ...",
+    importExportTax: "သွင်းကုန်/ပို့ကုန် အခွန်",
+    bridgeTax: "တံတားခွန်",
+    irrigationTax: "ဆည်မြောင်းခွန်",
+    agricultureTax: "စိုက်ပျိုးရေးခွန်",
   }
 };
 
