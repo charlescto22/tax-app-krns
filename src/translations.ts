@@ -181,6 +181,78 @@ export const translations = {
     kachin: "Kachin State",
     karenni: "Karenni State",
     karen: "Karen State",
+
+    // Tax Calculation Page Specifics
+    taxCalculationDynamicDesc: "Dynamic calculation based on tax category and type",
+    activePath: "Active Path:",
+    step1SelectCategory: "Step 1: Select Tax Category",
+    chooseTaxTypeToCalculate: "Choose the type of tax to calculate",
+    taxCategory: "Tax Category",
+    remarksAdditionalNotes: "Remarks / Additional Notes",
+
+    // Tax Calculation Page - General & Paths
+    tradeAndCustoms: "Trade & Customs",
+    gateAndRoadUsage: "Gate & Road Usage",
+    landAndProperty: "Land & Property",
+    loadingPermissions: "Loading permissions...",
+    noPermissions: "You are not authorized to collect any taxes. Contact Admin.",
+    enterTaxpayerName: "Enter taxpayer name",
+    selectStationPlaceholder: "Select station...",
+
+    // Path A: Trade
+    pathATrade: "Path A: Trade & Customs Calculation",
+    pathATradeDesc: "Calculate tax for commercial goods and imports/exports",
+    goodsType: "Goods Type",
+    selectGoodsType: "Select goods type...",
+    fuel: "Fuel",
+    constructionMaterials: "Construction Materials",
+    foodstuff: "Foodstuff",
+    electronics: "Electronics",
+    textiles: "Textiles",
+    otherGoods: "Other Goods",
+    totalCargoValue: "Total Cargo Value",
+    enterCargoValue: "Enter cargo value",
+    autoFilledOrManual: "Auto-filled or manual",
+    formula: "Formula:",
+    formulaTrade: "Calculated Tax = Cargo Value × (Tax Rate ÷ 100)",
+
+    // Path B: Road
+    pathBRoad: "Path B: Gate & Road Usage Calculation",
+    pathBRoadDesc: "Calculate fixed rate tax for vehicle types (Demoso-Mawchi Section)",
+    vehicleType: "Vehicle Type",
+    motorcycle: "Motorcycle",
+    car: "Car",
+    sixWheelTruck: "6-Wheel Truck",
+    heavyTruck: "Heavy Truck",
+    bus: "Bus",
+    formulaRoad: "Fixed Rate from Database (No calculation needed)",
+
+    // Path C: Land
+    pathCLand: "Path C: Land & Property Calculation",
+    pathCLandDesc: "Calculate tax based on land area and zone classification",
+    landAreaAcres: "Land Area (Acres)",
+    enterAreaAcres: "Enter area in acres",
+    zoneType: "Zone Type",
+    selectZone: "Select zone...",
+    urbanZone: "Urban Zone",
+    suburbanZone: "Suburban Zone",
+    ruralZone: "Rural Zone",
+    highlandZone: "Highland Zone",
+    formulaLand: "Calculated Tax = Land Area (acres) × Rate per Acre",
+
+    // Totals & Actions
+    totalPayableAmount: "Total Payable Amount",
+    finalCalculatedTax: "Final calculated tax amount",
+    validationPassed: "✓ Validation Passed: Amount is greater than 0",
+    completeFieldsToCalculate: "Please complete all required fields to calculate tax amount",
+    resetForm: "Reset Form",
+    saveAndRecord: "Save & Record",
+
+    // Info Card
+    selectCategoryToBegin: "Select a tax category above to begin calculation",
+    tradeInfoDesc: "For commercial goods, imports, and exports",
+    roadInfoDesc: "Fixed rates for vehicles on toll roads",
+    landInfoDesc: "Based on land area and zone type",
   },
   mm: {
     // General
@@ -364,6 +436,78 @@ export const translations = {
     kachin: "ကချင်ပြည်နယ်",
     karenni: "ကရင်နီပြည်",
     karen: "ကရင်ပြည်နယ်",
+
+    // Tax Calculation Page Specifics
+    taxCalculationDynamicDesc: "အခွန်အမျိုးအစားအလိုက် ပြောင်းလဲတွက်ချက်မှုစနစ်",
+    activePath: "လက်ရှိအမျိုးအစား:",
+    step1SelectCategory: "အဆင့် ၁: အခွန်အမျိုးအစား ရွေးချယ်ပါ",
+    chooseTaxTypeToCalculate: "တွက်ချက်မည့် အခွန်အမျိုးအစားကို ရွေးချယ်ပါ",
+    taxCategory: "အခွန်အမျိုးအစား",
+    remarksAdditionalNotes: "မှတ်ချက် / အခြားအချက်အလက်များ",
+
+    // Tax Calculation Page - General & Paths
+    tradeAndCustoms: "ကုန်သွယ်မှု နှင့် အကောက်ခွန်",
+    gateAndRoadUsage: "ဂိတ် နှင့် လမ်းအသုံးပြုမှု",
+    landAndProperty: "မြေ နှင့် ပစ္စည်းခွန်",
+    loadingPermissions: "ဝင်ရောက်ခွင့်များကို စစ်ဆေးနေပါသည်...",
+    noPermissions: "သင့်တွင် အခွန်ကောက်ခံခွင့် မရှိပါ။ အက်ဒမင်နှင့် ဆက်သွယ်ပါ။",
+    enterTaxpayerName: "အခွန်ထမ်းအမည် ထည့်ပါ",
+    selectStationPlaceholder: "ဂိတ်ရွေးချယ်ပါ...",
+
+    // Path A: Trade
+    pathATrade: "လမ်းကြောင်း က: ကုန်သွယ်မှုနှင့် အကောက်ခွန် တွက်ချက်ခြင်း",
+    pathATradeDesc: "စီးပွားရေးကုန်စည်များ၊ သွင်းကုန်/ပို့ကုန်များအတွက် အခွန်တွက်ချက်ရန်",
+    goodsType: "ကုန်စည်အမျိုးအစား",
+    selectGoodsType: "ကုန်စည်အမျိုးအစား ရွေးချယ်ပါ...",
+    fuel: "လောင်စာဆီ",
+    constructionMaterials: "ဆောက်လုပ်ရေးပစ္စည်းများ",
+    foodstuff: "စားသောက်ကုန်",
+    electronics: "လျှပ်စစ်ပစ္စည်းများ",
+    textiles: "အထည်အလိပ်",
+    otherGoods: "အခြားကုန်စည်များ",
+    totalCargoValue: "စုစုပေါင်း ကုန်စည်တန်ဖိုး",
+    enterCargoValue: "ကုန်စည်တန်ဖိုး ထည့်ပါ",
+    autoFilledOrManual: "အလိုအလျောက် သို့မဟုတ် ကိုယ်တိုင်ထည့်ရန်",
+    formula: "ပုံသေနည်း:",
+    formulaTrade: "ကျသင့်အခွန် = ကုန်စည်တန်ဖိုး × (အခွန်နှုန်း ÷ ၁၀၀)",
+
+    // Path B: Road
+    pathBRoad: "လမ်းကြောင်း ခ: ဂိတ်နှင့် လမ်းအသုံးပြုမှု တွက်ချက်ခြင်း",
+    pathBRoadDesc: "ယာဉ်အမျိုးအစားအလိုက် သတ်မှတ်ထားသော အခွန်ကို တွက်ချက်ရန် (ဒီမော့ဆိုး-မော်ချီး လမ်းပိုင်း)",
+    vehicleType: "ယာဉ်အမျိုးအစား",
+    motorcycle: "ဆိုင်ကယ်",
+    car: "ကား",
+    sixWheelTruck: "၆-ဘီးယာဉ်",
+    heavyTruck: "ကုန်တင်ယာဉ်ကြီး",
+    bus: "ခရီးသည်တင်ယာဉ်",
+    formulaRoad: "ဒေတာဘေ့စ်မှ သတ်မှတ်ထားသောနှုန်းထား (တွက်ချက်ရန်မလိုပါ)",
+
+    // Path C: Land
+    pathCLand: "လမ်းကြောင်း ဂ: မြေနှင့် ပစ္စည်းခွန် တွက်ချက်ခြင်း",
+    pathCLandDesc: "မြေဧရိယာနှင့် ဇုန်အမျိုးအစားပေါ်မူတည်၍ အခွန်တွက်ချက်ရန်",
+    landAreaAcres: "မြေဧရိယာ (ဧက)",
+    enterAreaAcres: "ဧကပမာဏ ထည့်ပါ",
+    zoneType: "ဇုန်အမျိုးအစား",
+    selectZone: "ဇုန်ရွေးချယ်ပါ...",
+    urbanZone: "မြို့ပြဇုန်",
+    suburbanZone: "မြို့စွန်ဇုန်",
+    ruralZone: "ကျေးလက်ဇုန်",
+    highlandZone: "တောင်ပေါ်ဇုန်",
+    formulaLand: "ကျသင့်အခွန် = မြေဧရိယာ (ဧက) × တစ်ဧကနှုန်းထား",
+
+    // Totals & Actions
+    totalPayableAmount: "စုစုပေါင်း ပေးချေရမည့်ငွေ",
+    finalCalculatedTax: "နောက်ဆုံး တွက်ချက်ထားသော အခွန်ပမာဏ",
+    validationPassed: "✓ အတည်ပြုပြီး: ပမာဏသည် ၀ ထက်ကြီးပါသည်",
+    completeFieldsToCalculate: "အခွန်တွက်ချက်ရန် လိုအပ်သောအချက်အလက်များကို ပြည့်စုံစွာထည့်ပါ",
+    resetForm: "အသစ်ပြန်စမည်",
+    saveAndRecord: "မှတ်တမ်းသိမ်းဆည်းမည်",
+
+    // Info Card
+    selectCategoryToBegin: "တွက်ချက်မှုစတင်ရန် အထက်မှ အခွန်အမျိုးအစားကို ရွေးချယ်ပါ",
+    tradeInfoDesc: "စီးပွားရေးကုန်စည်များ၊ သွင်းကုန်/ပို့ကုန်များအတွက်",
+    roadInfoDesc: "လမ်းအသုံးပြုသော ယာဉ်များအတွက် သတ်မှတ်နှုန်းထားများ",
+    landInfoDesc: "မြေဧရိယာနှင့် ဇုန်အမျိုးအစားအပေါ် အခြေခံသည်",
   }
 };
 

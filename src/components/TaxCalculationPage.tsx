@@ -17,6 +17,7 @@ import { collection, addDoc, doc, getDoc } from "firebase/firestore";
 // Import Printing Tools
 import { useReactToPrint } from "react-to-print";
 import { ReceiptTemplate } from "./ReceiptTemplate";
+import { useLanguage } from "../contexts/LanguageContext";
 
 // Lookup tables for rates
 const COMMODITY_RATES = {
@@ -45,14 +46,14 @@ const ZONE_RATES = {
 
 // Centralized list of all tax types to match IDs used in UserManagementPage
 const ALL_TAX_TYPES = [
-  { id: "customs", label: "Customs Duty" },
-  { id: "commercial", label: "Commercial Tax" },
-  { id: "import-export", label: "Import/Export Tax" },
-  { id: "road", label: "Road Tax" },
-  { id: "bridge", label: "Bridge Tax" },
-  { id: "land", label: "Land Tax" },
-  { id: "irrigation", label: "Irrigation Tax" },
-  { id: "agriculture", label: "Agriculture Tax" },
+  { id: "customs", labelKey: "customsDuty" },
+  { id: "commercial", labelKey: "commercialTax" },
+  { id: "import-export", labelKey: "importExportTax" }, // Ensure this is in translations if used
+  { id: "road", labelKey: "roadTax" },
+  { id: "bridge", labelKey: "bridgeTax" }, // Ensure this is in translations if used
+  { id: "land", labelKey: "landTax" },
+  { id: "irrigation", labelKey: "irrigationTax" }, // Ensure this is in translations if used
+  { id: "agriculture", labelKey: "agricultureTax" }, // Ensure this is in translations if used
 ];
 
 interface TaxCalculationPageProps {
@@ -75,6 +76,7 @@ const saveOfflineRecord = (record: any) => {
 export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPageProps) {
   const [taxCategory, setTaxCategory] = useState("");
   const [calculationPath, setCalculationPath] = useState<"trade" | "road" | "land" | null>(null);
+  const { t } = useLanguage();
   
   // Path A: Trade & Customs
   const [goodsType, setGoodsType] = useState("");
@@ -114,14 +116,11 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
         const userDoc = await getDoc(doc(db, "users", auth.currentUser.uid));
         if (userDoc.exists()) {
           const userData = userDoc.data();
-          // If admin/manager, allow all. If collector, use specific list.
           if (userData.role === 'administrator' || userData.role === 'remittance-manager') {
             setAllowedTaxTypes(ALL_TAX_TYPES.map(t => t.id));
           } else {
             setAllowedTaxTypes(userData.allowedTaxTypes || []);
           }
-          
-          // Pre-fill station if assigned to user
           if (userData.station) {
              setCollectionStation(userData.station);
           }
@@ -147,7 +146,6 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
     } else {
       setCalculationPath(null);
     }
-    // Reset fields when category changes
     setCalculatedTax(0);
     setErrors({});
   }, [taxCategory]);
@@ -203,29 +201,28 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
     const newErrors: Record<string, string> = {};
 
     if (!taxpayerName.trim()) {
-      newErrors.taxpayerName = "Taxpayer name is required";
+      newErrors.taxpayerName = "Required";
     }
     if (!taxCategory) {
-      newErrors.taxCategory = "Tax category is required";
+      newErrors.taxCategory = "Required";
     }
     if (!collectionStation) {
-      newErrors.collectionStation = "Collection station is required";
+      newErrors.collectionStation = "Required";
     }
 
-    // Path-specific validation
     if (calculationPath === "trade") {
-      if (!goodsType) newErrors.goodsType = "Goods type is required";
-      if (!cargoValue || parseFloat(cargoValue) <= 0 || isNaN(parseFloat(cargoValue))) newErrors.cargoValue = "Valid cargo value is required";
-      if (!taxRate || parseFloat(taxRate) <= 0 || isNaN(parseFloat(taxRate))) newErrors.taxRate = "Valid tax rate is required";
+      if (!goodsType) newErrors.goodsType = "Required";
+      if (!cargoValue || parseFloat(cargoValue) <= 0 || isNaN(parseFloat(cargoValue))) newErrors.cargoValue = "Required";
+      if (!taxRate || parseFloat(taxRate) <= 0 || isNaN(parseFloat(taxRate))) newErrors.taxRate = "Required";
     } else if (calculationPath === "road") {
-      if (!vehicleType) newErrors.vehicleType = "Vehicle type is required";
+      if (!vehicleType) newErrors.vehicleType = "Required";
     } else if (calculationPath === "land") {
-      if (!landArea || parseFloat(landArea) <= 0 || isNaN(parseFloat(landArea))) newErrors.landArea = "Valid land area is required";
-      if (!zoneType) newErrors.zoneType = "Zone type is required";
+      if (!landArea || parseFloat(landArea) <= 0 || isNaN(parseFloat(landArea))) newErrors.landArea = "Required";
+      if (!zoneType) newErrors.zoneType = "Required";
     }
 
     if (calculatedTax <= 0) {
-      newErrors.calculatedTax = "Calculated tax must be greater than 0";
+      newErrors.calculatedTax = "Required";
     }
 
     setErrors(newErrors);
@@ -247,7 +244,6 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
     setCollectionStation("");
     setRemarks("");
     setErrors({});
-    // Generate new receipt number
     const timestamp = Date.now();
     setReceiptNumber(`RCP-${timestamp.toString().slice(-8)}`);
   };
@@ -277,30 +273,25 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
           landArea: calculationPath === "land" ? landArea : null,
         },
         createdAt: new Date().toISOString(),
-        createdBy: auth.currentUser?.email || "Tax Collector" // Use real email
+        createdBy: auth.currentUser?.email || "Tax Collector"
       };
       
       try {
         if (isOnline) {
           const docRef = await addDoc(collection(db, "transactions"), record);
-          console.log("Document written with ID: ", docRef.id);
-          alert(`✓ Submission Sent to Cloud!\n\nReceipt: ${receiptNumber}\nID: ${docRef.id}\nStatus: PENDING VERIFICATION`);
+          alert(`✅ ${t("saveSuccess")}\n\nReceipt: ${receiptNumber}\nID: ${docRef.id}`);
         } else {
-          const offlineRecord = saveOfflineRecord(record);
-          console.log("Offline Record Saved:", offlineRecord);
-          alert(`⚠️ OFFLINE MODE\n\nReceipt: ${receiptNumber}\nStatus: SAVED TO DEVICE\n\nRecord saved locally. Sync when internet returns.`);
+          saveOfflineRecord(record);
+          alert(`⚠️ OFFLINE MODE\n\nReceipt: ${receiptNumber}\nSaved to device. Sync when internet returns.`);
         }
         handleReset();
       } catch (e) {
         console.error("Error adding document: ", e);
-        alert("❌ Error saving to database. Please check your Firebase configuration or network.");
+        alert(`❌ ${t("saveError")}`);
       }
-    } else {
-      alert("⚠️ Please complete all required fields correctly.");
     }
   };
 
-  // Prepare data for the receipt template
   const receiptData = {
     receiptNumber,
     date: new Date().toLocaleDateString(),
@@ -310,20 +301,16 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
     taxpayerName: taxpayerName || "Guest",
     taxType: taxCategory || "General",
     amount: `MMK ${calculatedTax.toLocaleString()}`,
-    // Include new fields for detailed receipt
     goodsType: calculationPath === "trade" ? goodsType : undefined,
     cargoValue: calculationPath === "trade" ? cargoValue : undefined,
     vehicleType: calculationPath === "road" ? vehicleType : undefined,
     landArea: calculationPath === "land" ? landArea : undefined,
-    department: "Tax Department" // You might want to fetch this dynamically if needed
+    department: "Tax Department" 
   };
 
-  // Setup Print Handler
   const handlePrint = useReactToPrint({
     contentRef: receiptRef,
     documentTitle: `Receipt-${receiptNumber}`,
-    onAfterPrint: () => console.log("Print successful"),
-    onPrintError: (error) => console.error("Print failed:", error),
   });
 
   const getPathColor = () => {
@@ -347,72 +334,70 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-gray-900 mb-2">Tax Calculation</h1>
-        <p className="text-gray-600">Dynamic calculation based on tax category and type</p>
+        <h1 className="text-gray-900 mb-2">{t("taxCalculation")}</h1>
+        <p className="text-gray-600">{t("taxCalculationDynamicDesc")}</p>
       </div>
 
-      {/* Current Calculation Path Indicator */}
       {calculationPath && (
         <Alert className={getPathColor()}>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription className="flex items-center gap-2">
             {getPathIcon()}
             <span>
-              <strong>Active Path:</strong>{" "}
-              {calculationPath === "trade" && "Trade & Customs"}
-              {calculationPath === "road" && "Gate & Road Usage"}
-              {calculationPath === "land" && "Land & Property"}
+              <strong>{t("activePath")} </strong>{" "}
+              {calculationPath === "trade" && t("tradeAndCustoms")}
+              {calculationPath === "road" && t("gateAndRoadUsage")}
+              {calculationPath === "land" && t("landAndProperty")}
             </span>
           </AlertDescription>
         </Alert>
       )}
 
-      {/* Step 1: Tax Category Selection */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
             <Calculator className="h-5 w-5 text-blue-600" />
-            <CardTitle>Step 1: Select Tax Category</CardTitle>
+            <CardTitle>{t("step1SelectCategory")}</CardTitle>
           </div>
-          <CardDescription>Choose the type of tax to calculate</CardDescription>
+          <CardDescription>{t("chooseTaxTypeToCalculate")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="taxCategory">Tax Category *</Label>
+            <Label htmlFor="taxCategory">{t("taxCategory")} *</Label>
             
-            {/* UPDATED SELECT: Filters options based on allowedTaxTypes */}
             <Select value={taxCategory} onValueChange={setTaxCategory} disabled={isLoadingPermissions}>
               <SelectTrigger id="taxCategory">
-                <SelectValue placeholder={isLoadingPermissions ? "Loading permissions..." : "Select tax category..."} />
+                <SelectValue placeholder={isLoadingPermissions ? t("loadingPermissions") : t("selectTaxCategory")} />
               </SelectTrigger>
               <SelectContent>
                 {ALL_TAX_TYPES
-                  .filter(type => allowedTaxTypes.includes(type.id)) // <--- THE FILTER
+                  .filter(type => allowedTaxTypes.includes(type.id))
                   .map(type => (
-                    <SelectItem key={type.id} value={type.id}>{type.label}</SelectItem>
+                    // Uses t() dynamically if the key exists, otherwise falls back to label
+                    <SelectItem key={type.id} value={type.id}>{t(type.labelKey) || type.label}</SelectItem>
                   ))
                 }
               </SelectContent>
             </Select>
             
             {allowedTaxTypes.length === 0 && !isLoadingPermissions && (
-               <p className="text-xs text-red-500 mt-1">You are not authorized to collect any taxes. Contact Admin.</p>
+               <p className="text-xs text-red-500 mt-1">{t("noPermissions")}</p>
             )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="taxpayerName">Taxpayer Name *</Label>
+              <Label htmlFor="taxpayerName">{t("taxPayerName")} *</Label>
               <Input
                 id="taxpayerName"
-                placeholder="Enter taxpayer name"
+                placeholder={t("enterTaxpayerName")}
                 value={taxpayerName}
                 onChange={(e) => setTaxpayerName(e.target.value)}
               />
               {errors.taxpayerName && <p className="text-red-500 text-sm">{errors.taxpayerName}</p>}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="taxpayerNRC">NRC / Registration No.</Label>
+              <Label htmlFor="taxpayerNRC">{t("nrcOrRegistration")}</Label>
               <Input
                 id="taxpayerNRC"
                 placeholder="e.g., 12/OUKAMA(N)123456"
@@ -421,26 +406,26 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="collectionStation">Collection Station *</Label>
+              <Label htmlFor="collectionStation">{t("collectionStation")} *</Label>
               <Select value={collectionStation} onValueChange={setCollectionStation}>
                 <SelectTrigger id="collectionStation">
-                  <SelectValue placeholder="Select station..." />
+                  <SelectValue placeholder={t("selectStationPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="pasaela">Pasaela Gate</SelectItem>
-                  <SelectItem value="8mile">8-Mile Gate</SelectItem>
-                  <SelectItem value="central">Central District</SelectItem>
-                  <SelectItem value="township4">Township Office 4</SelectItem>
-                  <SelectItem value="border2">Border Checkpoint 2</SelectItem>
+                  <SelectItem value="pasaela">{t("pasaelaGate")}</SelectItem>
+                  <SelectItem value="8mile">{t("eightMileGate")}</SelectItem>
+                  <SelectItem value="central">{t("centralDistrict")}</SelectItem>
+                  <SelectItem value="township4">{t("townshipOffice4")}</SelectItem>
+                  <SelectItem value="border2">{t("borderCheckpoint2")}</SelectItem>
                 </SelectContent>
               </Select>
               {errors.collectionStation && <p className="text-red-500 text-sm">{errors.collectionStation}</p>}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="receiptNumber">Receipt Number</Label>
+              <Label htmlFor="receiptNumber">{t("receiptNumber")}</Label>
               <Input
                 id="receiptNumber"
-                placeholder="Auto-generated"
+                placeholder={t("receiptNumberPlaceholder")}
                 value={receiptNumber}
                 onChange={(e) => setReceiptNumber(e.target.value)}
                 className="bg-gray-50"
@@ -449,10 +434,10 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="remarks">Remarks / Additional Notes</Label>
+            <Label htmlFor="remarks">{t("remarksAdditionalNotes")}</Label>
             <Textarea
               id="remarks"
-              placeholder="Enter any additional notes or comments"
+              placeholder={t("remarksPlaceholder")}
               value={remarks}
               onChange={(e) => setRemarks(e.target.value)}
               rows={2}
@@ -467,24 +452,24 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
           <CardHeader>
             <div className="flex items-center gap-2">
               <Package className="h-5 w-5 text-blue-600" />
-              <CardTitle>Path A: Trade & Customs Calculation</CardTitle>
+              <CardTitle>{t("pathATrade")}</CardTitle>
             </div>
-            <CardDescription>Calculate tax for commercial goods and imports/exports</CardDescription>
+            <CardDescription>{t("pathATradeDesc")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="goodsType">Goods Type *</Label>
+              <Label htmlFor="goodsType">{t("goodsType")} *</Label>
               <Select value={goodsType} onValueChange={setGoodsType}>
                 <SelectTrigger id="goodsType">
-                  <SelectValue placeholder="Select goods type..." />
+                  <SelectValue placeholder={t("selectGoodsType")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="fuel">Fuel (8.5%)</SelectItem>
-                  <SelectItem value="construction">Construction Materials (12%)</SelectItem>
-                  <SelectItem value="foodstuff">Foodstuff (5%)</SelectItem>
-                  <SelectItem value="electronics">Electronics (15%)</SelectItem>
-                  <SelectItem value="textiles">Textiles (10%)</SelectItem>
-                  <SelectItem value="other">Other Goods (7.5%)</SelectItem>
+                  <SelectItem value="fuel">{t("fuel")} (8.5%)</SelectItem>
+                  <SelectItem value="construction">{t("constructionMaterials")} (12%)</SelectItem>
+                  <SelectItem value="foodstuff">{t("foodstuff")} (5%)</SelectItem>
+                  <SelectItem value="electronics">{t("electronics")} (15%)</SelectItem>
+                  <SelectItem value="textiles">{t("textiles")} (10%)</SelectItem>
+                  <SelectItem value="other">{t("otherGoods")} (7.5%)</SelectItem>
                 </SelectContent>
               </Select>
               {errors.goodsType && <p className="text-red-500 text-sm">{errors.goodsType}</p>}
@@ -492,11 +477,11 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="cargoValue">Total Cargo Value *</Label>
+                <Label htmlFor="cargoValue">{t("totalCargoValue")} *</Label>
                 <Input
                   id="cargoValue"
                   type="number"
-                  placeholder="Enter cargo value"
+                  placeholder={t("enterCargoValue")}
                   value={cargoValue}
                   onChange={(e) => setCargoValue(e.target.value)}
                   min="0"
@@ -505,11 +490,11 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
                 {errors.cargoValue && <p className="text-red-500 text-sm">{errors.cargoValue}</p>}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="taxRate">Tax Rate (%) *</Label>
+                <Label htmlFor="taxRate">{t("taxRate")} *</Label>
                 <Input
                   id="taxRate"
                   type="number"
-                  placeholder="Auto-filled or manual"
+                  placeholder={t("autoFilledOrManual")}
                   value={taxRate}
                   onChange={(e) => setTaxRate(e.target.value)}
                   min="0"
@@ -523,7 +508,7 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
             <Alert className="bg-blue-100 border-blue-200">
               <AlertCircle className="h-4 w-4 text-blue-600" />
               <AlertDescription className="text-blue-800">
-                <strong>Formula:</strong> Calculated Tax = Cargo Value × (Tax Rate ÷ 100)
+                <strong>{t("formula")}</strong> {t("formulaTrade")}
               </AlertDescription>
             </Alert>
           </CardContent>
@@ -536,20 +521,20 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
           <CardHeader>
             <div className="flex items-center gap-2">
               <Truck className="h-5 w-5 text-orange-600" />
-              <CardTitle>Path B: Gate & Road Usage Calculation</CardTitle>
+              <CardTitle>{t("pathBRoad")}</CardTitle>
             </div>
-            <CardDescription>Calculate fixed rate tax for vehicle types (Demoso-Mawchi Section)</CardDescription>
+            <CardDescription>{t("pathBRoadDesc")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-3">
-              <Label>Vehicle Type *</Label>
+              <Label>{t("vehicleType")} *</Label>
               <RadioGroup value={vehicleType} onValueChange={setVehicleType}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="flex items-center space-x-2 border rounded-lg p-4 hover:bg-orange-50 cursor-pointer">
                     <RadioGroupItem value="motorcycle" id="motorcycle" />
                     <Label htmlFor="motorcycle" className="flex-1 cursor-pointer">
                       <div className="flex justify-between items-center">
-                        <span>Motorcycle</span>
+                        <span>{t("motorcycle")}</span>
                         <Badge variant="outline" className="bg-white">MMK 5,000</Badge>
                       </div>
                     </Label>
@@ -558,7 +543,7 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
                     <RadioGroupItem value="car" id="car" />
                     <Label htmlFor="car" className="flex-1 cursor-pointer">
                       <div className="flex justify-between items-center">
-                        <span>Car</span>
+                        <span>{t("car")}</span>
                         <Badge variant="outline" className="bg-white">MMK 10,000</Badge>
                       </div>
                     </Label>
@@ -567,7 +552,7 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
                     <RadioGroupItem value="6-wheel-truck" id="6-wheel-truck" />
                     <Label htmlFor="6-wheel-truck" className="flex-1 cursor-pointer">
                       <div className="flex justify-between items-center">
-                        <span>6-Wheel Truck</span>
+                        <span>{t("sixWheelTruck")}</span>
                         <Badge variant="outline" className="bg-white">MMK 20,000</Badge>
                       </div>
                     </Label>
@@ -576,7 +561,7 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
                     <RadioGroupItem value="heavy-truck" id="heavy-truck" />
                     <Label htmlFor="heavy-truck" className="flex-1 cursor-pointer">
                       <div className="flex justify-between items-center">
-                        <span>Heavy Truck</span>
+                        <span>{t("heavyTruck")}</span>
                         <Badge variant="outline" className="bg-white">MMK 35,000</Badge>
                       </div>
                     </Label>
@@ -585,7 +570,7 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
                     <RadioGroupItem value="bus" id="bus" />
                     <Label htmlFor="bus" className="flex-1 cursor-pointer">
                       <div className="flex justify-between items-center">
-                        <span>Bus</span>
+                        <span>{t("bus")}</span>
                         <Badge variant="outline" className="bg-white">MMK 15,000</Badge>
                       </div>
                     </Label>
@@ -598,7 +583,7 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
             <Alert className="bg-orange-100 border-orange-200">
               <AlertCircle className="h-4 w-4 text-orange-600" />
               <AlertDescription className="text-orange-800">
-                <strong>Formula:</strong> Fixed Rate from Database (No calculation needed)
+                <strong>{t("formula")}</strong> {t("formulaRoad")}
               </AlertDescription>
             </Alert>
           </CardContent>
@@ -611,18 +596,18 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
           <CardHeader>
             <div className="flex items-center gap-2">
               <TreePine className="h-5 w-5 text-green-600" />
-              <CardTitle>Path C: Land & Property Calculation</CardTitle>
+              <CardTitle>{t("pathCLand")}</CardTitle>
             </div>
-            <CardDescription>Calculate tax based on land area and zone classification</CardDescription>
+            <CardDescription>{t("pathCLandDesc")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="landArea">Land Area (Acres) *</Label>
+                <Label htmlFor="landArea">{t("landAreaAcres")} *</Label>
                 <Input
                   id="landArea"
                   type="number"
-                  placeholder="Enter area in acres"
+                  placeholder={t("enterAreaAcres")}
                   value={landArea}
                   onChange={(e) => setLandArea(e.target.value)}
                   min="0"
@@ -631,16 +616,16 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
                 {errors.landArea && <p className="text-red-500 text-sm">{errors.landArea}</p>}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="zoneType">Zone Type *</Label>
+                <Label htmlFor="zoneType">{t("zoneType")} *</Label>
                 <Select value={zoneType} onValueChange={setZoneType}>
                   <SelectTrigger id="zoneType">
-                    <SelectValue placeholder="Select zone..." />
+                    <SelectValue placeholder={t("selectZone")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="urban">Urban Zone (MMK 25,000/acre)</SelectItem>
-                    <SelectItem value="suburban">Suburban Zone (MMK 15,000/acre)</SelectItem>
-                    <SelectItem value="rural">Rural Zone (MMK 8,000/acre)</SelectItem>
-                    <SelectItem value="highland">Highland Zone (MMK 5,000/acre)</SelectItem>
+                    <SelectItem value="urban">{t("urbanZone")} (MMK 25,000)</SelectItem>
+                    <SelectItem value="suburban">{t("suburbanZone")} (MMK 15,000)</SelectItem>
+                    <SelectItem value="rural">{t("ruralZone")} (MMK 8,000)</SelectItem>
+                    <SelectItem value="highland">{t("highlandZone")} (MMK 5,000)</SelectItem>
                   </SelectContent>
                 </Select>
                 {errors.zoneType && <p className="text-red-500 text-sm">{errors.zoneType}</p>}
@@ -650,7 +635,7 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
             <Alert className="bg-green-100 border-green-200">
               <AlertCircle className="h-4 w-4 text-green-600" />
               <AlertDescription className="text-green-800">
-                <strong>Formula:</strong> Calculated Tax = Land Area (acres) × Rate per Acre
+                <strong>{t("formula")}</strong> {t("formulaLand")}
               </AlertDescription>
             </Alert>
           </CardContent>
@@ -663,14 +648,14 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
           <CardHeader>
             <div className="flex items-center gap-2">
               <DollarSign className="h-5 w-5 text-blue-600" />
-              <CardTitle>Total Payable Amount</CardTitle>
+              <CardTitle>{t("totalPayableAmount")}</CardTitle>
             </div>
-            <CardDescription>Final calculated tax amount</CardDescription>
+            <CardDescription>{t("finalCalculatedTax")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
               <div>
-                <p className="text-gray-600 mb-1">Calculated Tax Amount</p>
+                <p className="text-gray-600 mb-1">{t("calculatedTax")}</p>
                 <div className="flex items-center gap-3">
                   <Select value={currency} onValueChange={setCurrency}>
                     <SelectTrigger className="w-24">
@@ -696,14 +681,14 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
               <Alert className="bg-green-100 border-green-200">
                 <CheckCircle className="h-4 w-4 text-green-600" />
                 <AlertDescription className="text-green-800">
-                  ✓ Validation Passed: Amount is greater than 0
+                  {t("validationPassed")}
                 </AlertDescription>
               </Alert>
             ) : (
               <Alert className="bg-gray-100 border-gray-200">
                 <AlertCircle className="h-4 w-4 text-gray-600" />
                 <AlertDescription className="text-gray-600">
-                  Please complete all required fields to calculate tax amount
+                  {t("completeFieldsToCalculate")}
                 </AlertDescription>
               </Alert>
             )}
@@ -714,7 +699,7 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
                 onClick={handleReset}
                 className="flex-1 sm:flex-none"
               >
-                Reset Form
+                {t("resetForm")}
               </Button>
               <Button
                 variant="outline"
@@ -723,7 +708,7 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
                 className="flex-1 sm:flex-none"
               >
                 <Printer className="h-4 w-4 mr-2" />
-                Print Receipt
+                {t("print")}
               </Button>
               <Button
                 onClick={handleSave}
@@ -731,7 +716,7 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
                 className="bg-blue-600 hover:bg-blue-700 flex-1 sm:flex-none"
               >
                 <Save className="h-4 w-4 mr-2" />
-                Save & Record
+                {t("saveAndRecord")}
               </Button>
             </div>
           </CardContent>
@@ -744,22 +729,22 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
           <CardContent className="pt-6">
             <div className="text-center text-gray-500 space-y-2">
               <Calculator className="h-12 w-12 mx-auto text-gray-400" />
-              <p>Select a tax category above to begin calculation</p>
+              <p>{t("selectCategoryToBegin")}</p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 text-left">
                 <div className="border rounded-lg p-4">
                   <Package className="h-6 w-6 text-blue-600 mb-2" />
-                  <h3 className="text-gray-900 mb-1">Trade & Customs</h3>
-                  <p className="text-gray-600">For commercial goods, imports, and exports</p>
+                  <h3 className="text-gray-900 mb-1">{t("tradeAndCustoms")}</h3>
+                  <p className="text-gray-600">{t("tradeInfoDesc")}</p>
                 </div>
                 <div className="border rounded-lg p-4">
                   <Truck className="h-6 w-6 text-orange-600 mb-2" />
-                  <h3 className="text-gray-900 mb-1">Gate & Road Usage</h3>
-                  <p className="text-gray-600">Fixed rates for vehicles on toll roads</p>
+                  <h3 className="text-gray-900 mb-1">{t("gateAndRoadUsage")}</h3>
+                  <p className="text-gray-600">{t("roadInfoDesc")}</p>
                 </div>
                 <div className="border rounded-lg p-4">
                   <TreePine className="h-6 w-6 text-green-600 mb-2" />
-                  <h3 className="text-gray-900 mb-1">Land & Property</h3>
-                  <p className="text-gray-600">Based on land area and zone type</p>
+                  <h3 className="text-gray-900 mb-1">{t("landAndProperty")}</h3>
+                  <p className="text-gray-600">{t("landInfoDesc")}</p>
                 </div>
               </div>
             </div>
