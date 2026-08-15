@@ -16,6 +16,7 @@ import { ReportsPage } from "./components/ReportsPage";
 import { SettingsPage } from "./components/SettingsPage";
 import { UserManagementPage } from "./components/UserManagementPage";
 import { AdminSeeder } from "./components/AdminSeeder";
+import { PageHeader } from "./components/PageHeader";
 import { useLanguage } from "./contexts/LanguageContext";
 
 // User roles
@@ -182,25 +183,24 @@ export default function App() {
     const canAccessReports = currentUser.role === "administrator" || currentUser.role === "remittance-manager";
     const canAccessUserManagement = currentUser.role === "administrator";
 
+    const accessDenied = (message: string) => (
+      <div className="text-center py-12 page-enter">
+        <h2 className="text-foreground font-semibold mb-2">{t("accessDenied")}</h2>
+        <p className="text-muted-foreground">{message}</p>
+      </div>
+    );
+
     switch (activePage) {
       case "dashboard":
         if (!canAccessDashboard) {
-          return (
-            <div className="text-center py-12">
-              <h2 className="text-gray-900 mb-2">Access Denied</h2>
-              <p className="text-gray-600">You don't have permission to view this page.</p>
-            </div>
-          );
+          return accessDenied(t("accessDeniedGeneric"));
         }
         return (
-          <>
-            <div>
-              <h1 className="text-gray-900 mb-2">{t("dashboardOverview")}</h1>
-           <p className="text-gray-600">{t("dashboardDesc")}</p>
-            </div>
-            
+          <div key={activePage} className="space-y-6 page-enter">
+            <PageHeader title={t("dashboardOverview")} description={t("dashboardDesc")} />
+
             <MetricsCards />
-            
+
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2">
                 <RevenueChart />
@@ -209,68 +209,79 @@ export default function App() {
                 <TaxDistributionChart />
               </div>
             </div>
-            
+
             <TransactionsTable userRole={currentUser.role} />
-          </>
+          </div>
         );
       case "tax-collection":
-        return <TaxCollectionPage userRole={currentUser.role} onNavigateToCalculation={() => setActivePage("tax-calculation")} />;
+        return (
+          <div key={activePage} className="page-enter">
+            <TaxCollectionPage userRole={currentUser.role} onNavigateToCalculation={() => setActivePage("tax-calculation")} />
+          </div>
+        );
       case "tax-calculation":
-        return <TaxCalculationPage onNavigateToCollection={() => setActivePage("tax-collection")} />;
+        return (
+          <div key={activePage} className="page-enter">
+            <TaxCalculationPage onNavigateToCollection={() => setActivePage("tax-collection")} />
+          </div>
+        );
       case "tax-rate-management":
         if (!canAccessUserManagement) {
-          return (
-            <div className="text-center py-12">
-              <h2 className="text-gray-900 mb-2">Access Denied</h2>
-              <p className="text-gray-600">Only administrators can manage tax rates.</p>
-            </div>
-          );
+          return accessDenied(t("accessDeniedTaxRates"));
         }
-        return <TaxRateManagementPage />;
+        return (
+          <div key={activePage} className="page-enter">
+            <TaxRateManagementPage />
+          </div>
+        );
       case "remittance":
         if (!canAccessRemittance) {
-          return (
-            <div className="text-center py-12">
-              <h2 className="text-gray-900 mb-2">Access Denied</h2>
-              <p className="text-gray-600">You don't have permission to view this page.</p>
-            </div>
-          );
+          return accessDenied(t("accessDeniedGeneric"));
         }
-        return <RemittancePage userRole={currentUser.role} />;
+        return (
+          <div key={activePage} className="page-enter">
+            <RemittancePage userRole={currentUser.role} />
+          </div>
+        );
       case "monthly-reconciliation":
         if (!canAccessRemittance) {
-          return (
-            <div className="text-center py-12">
-              <h2 className="text-gray-900 mb-2">Access Denied</h2>
-              <p className="text-gray-600">You don't have permission to view this page.</p>
-            </div>
-          );
+          return accessDenied(t("accessDeniedGeneric"));
         }
-        return <MonthlyReconciliationPage userRole={currentUser.role} />;
+        return (
+          <div key={activePage} className="page-enter">
+            <MonthlyReconciliationPage userRole={currentUser.role} />
+          </div>
+        );
       case "revenue-distribution":
-        return <RevenueDistributionPage userRole={currentUser.role} />;
+        return (
+          <div key={activePage} className="page-enter">
+            <RevenueDistributionPage userRole={currentUser.role} />
+          </div>
+        );
       case "reports":
         if (!canAccessReports) {
-          return (
-            <div className="text-center py-12">
-              <h2 className="text-gray-900 mb-2">Access Denied</h2>
-              <p className="text-gray-600">You don't have permission to view this page.</p>
-            </div>
-          );
+          return accessDenied(t("accessDeniedGeneric"));
         }
-        return <ReportsPage />;
+        return (
+          <div key={activePage} className="page-enter">
+            <ReportsPage />
+          </div>
+        );
       case "user-management":
         if (!canAccessUserManagement) {
-          return (
-            <div className="text-center py-12">
-              <h2 className="text-gray-900 mb-2">Access Denied</h2>
-              <p className="text-gray-600">Only administrators can manage users.</p>
-            </div>
-          );
+          return accessDenied(t("accessDeniedUsers"));
         }
-        return <UserManagementPage />;
+        return (
+          <div key={activePage} className="page-enter">
+            <UserManagementPage />
+          </div>
+        );
       case "settings":
-        return <SettingsPage currentUser={currentUser} />;
+        return (
+          <div key={activePage} className="page-enter">
+            <SettingsPage currentUser={currentUser} />
+          </div>
+        );
       default:
         return null;
     }
@@ -282,7 +293,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <Header 
         onMenuClick={() => setSidebarOpen(!sidebarOpen)} 
         currentUser={currentUser} 

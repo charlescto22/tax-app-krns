@@ -46,6 +46,7 @@ import type { UserRole } from "../App";
 import { exportToCSV } from "../utils/exportUtils"; 
 import { db } from "../firebase";
 import { collection, onSnapshot, query, orderBy, doc, updateDoc } from "firebase/firestore";
+import { PageHeader } from "./PageHeader";
 
 const handleExportToExcel = () => {
   if (!selectedReport) return;
@@ -358,20 +359,16 @@ ${selectedReport.rejectionReason ? `\nRejection Reason: ${selectedReport.rejecti
   return (
     <div className="space-y-4">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-gray-900">Monthly Reconciliation</h1>
-          <p className="text-gray-600">
-            Review and approve monthly remittance reports from collection gates
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
+      <PageHeader
+        title="Monthly Reconciliation"
+        description="Review and approve monthly remittance reports from collection gates"
+        actions={
           <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
             <FileText className="h-3 w-3 mr-1" />
             {filteredReports.length} Reports
           </Badge>
-        </div>
-      </div>
+        }
+      />
 
       {/* Success Message */}
       {successMessage && (
@@ -384,7 +381,7 @@ ${selectedReport.rejectionReason ? `\nRejection Reason: ${selectedReport.rejecti
       {/* Access Control Message for Non-Admin */}
       {!canApprove && (
         <Alert className="bg-blue-50 border-blue-200">
-          <AlertCircle className="h-4 w-4 text-blue-600" />
+          <AlertCircle className="h-4 w-4 text-brand" />
           <AlertDescription className="text-blue-800">
             You have view-only access. Only Administrators can approve or request corrections.
           </AlertDescription>
@@ -608,7 +605,7 @@ ${selectedReport.rejectionReason ? `\nRejection Reason: ${selectedReport.rejecti
                       <div className="text-2xl text-blue-900">
                         {selectedReport.totalDigital.toLocaleString()}
                       </div>
-                      <div className="text-xs text-blue-600 mt-1">
+                      <div className="text-xs text-brand mt-1">
                         {digitalPercentage.toFixed(1)}% of total
                       </div>
                     </div>
@@ -638,7 +635,7 @@ ${selectedReport.rejectionReason ? `\nRejection Reason: ${selectedReport.rejecti
                   {/* Comparison Indicator */}
                   <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                     <div className="flex items-start gap-3">
-                      <AlertCircle className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+                      <AlertCircle className="h-5 w-5 text-brand shrink-0 mt-0.5" />
                       <div className="space-y-1 text-sm">
                         <div className="text-gray-900">Reconciliation Status</div>
                         <div className="text-gray-600">
@@ -762,7 +759,7 @@ ${selectedReport.rejectionReason ? `\nRejection Reason: ${selectedReport.rejecti
               </div>
 
               <Alert className="bg-blue-50 border-blue-200">
-                <AlertCircle className="h-4 w-4 text-blue-600" />
+                <AlertCircle className="h-4 w-4 text-brand" />
                 <AlertDescription className="text-blue-800 text-sm">
                   Once approved, this report will be marked as verified and the submitter will be
                   notified.

@@ -2,7 +2,6 @@ import { LayoutDashboard, Wallet, RefreshCw, FileText, Settings, Users, X, Calcu
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import type { UserRole } from "../App";
-// Import the language hook
 import { useLanguage } from "../contexts/LanguageContext";
 
 const getRoleBadgeColor = (role: UserRole): string => {
@@ -18,8 +17,6 @@ const getRoleBadgeColor = (role: UserRole): string => {
   }
 };
 
-
-
 interface SidebarProps {
   activePage: string;
   onNavigate: (pageId: string) => void;
@@ -30,7 +27,6 @@ interface SidebarProps {
 }
 
 export function Sidebar({ activePage, onNavigate, isOpen, onClose, userRole, onLogout }: SidebarProps) {
-  // 1. Get the translation function
   const { t } = useLanguage();
 
   const getRoleLabel = (role: UserRole): string => {
@@ -45,8 +41,7 @@ export function Sidebar({ activePage, onNavigate, isOpen, onClose, userRole, onL
         return "User";
     }
   };
-  
-  // 2. Define navItems INSIDE the component so we can use 't'
+
   const navItems = [
     { icon: LayoutDashboard, label: t("dashboard"), id: "dashboard", roles: ["administrator"] },
     { icon: Wallet, label: t("taxCollection"), id: "tax-collection", roles: ["administrator", "remittance-manager", "tax-collector"] },
@@ -60,64 +55,57 @@ export function Sidebar({ activePage, onNavigate, isOpen, onClose, userRole, onL
     { icon: Settings, label: t("settings"), id: "settings", roles: ["administrator", "remittance-manager", "tax-collector"] },
   ];
 
-  // Filter navigation items based on user role
-  const allowedNavItems = navItems.filter(item => item.roles.includes(userRole));
+  const allowedNavItems = navItems.filter((item) => item.roles.includes(userRole));
 
   return (
     <>
-      {/* Mobile Overlay */}
       {isOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
           onClick={onClose}
         />
       )}
-      
-      {/* Sidebar */}
+
       <aside
-        className={`fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-white border-r border-gray-200 transition-transform duration-300 z-40 flex flex-col
+        className={`fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 border-r border-gray-200 transition-transform duration-300 z-40 flex flex-col
           ${isOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
+        style={{ backgroundColor: "var(--sidebar)" }}
       >
-        {/* Close button for mobile */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 lg:hidden">
-          {/* 👇 Change this line 👇 */}
-          <span className="text-gray-900">{t("menu")}</span>
+          <span className="text-foreground font-medium">{t("menu")}</span>
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="h-5 w-5" />
           </Button>
         </div>
 
-        {/* Role Badge */}
         <div className="p-4 border-b border-gray-200">
           <Badge className={`w-full justify-center ${getRoleBadgeColor(userRole)}`}>
             {getRoleLabel(userRole)}
           </Badge>
         </div>
 
-        {/* Navigation Items */}
         <nav className="flex-1 overflow-y-auto p-4 space-y-1">
           {allowedNavItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = activePage === item.id;
-              return (
-                <Button
-                  key={item.id}
-                  variant={isActive ? "default" : "ghost"}
-                  className={`w-full justify-start ${
-                    isActive
-                      ? "bg-blue-600 text-white hover:bg-blue-700"
-                      : "text-gray-700 hover:bg-gray-100"
-                  }`}
-                  onClick={() => onNavigate(item.id)}
-                >
-                  <Icon className="mr-3 h-5 w-5" />
-                  {item.label}
-                </Button>
-              );
-            })}
+            const Icon = item.icon;
+            const isActive = activePage === item.id;
+            return (
+              <Button
+                key={item.id}
+                variant={isActive ? "default" : "ghost"}
+                className={`nav-item-active w-full justify-start ${
+                  isActive
+                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+                onClick={() => onNavigate(item.id)}
+              >
+                <Icon className="mr-3 h-5 w-5" />
+                {item.label}
+              </Button>
+            );
+          })}
         </nav>
-        
-        {/* Logout Button */}
+
         {onLogout && (
           <div className="p-4 border-t border-gray-200">
             <Button
@@ -126,8 +114,7 @@ export function Sidebar({ activePage, onNavigate, isOpen, onClose, userRole, onL
               onClick={onLogout}
             >
               <LogOut className="mr-3 h-5 w-5" />
-              {/* You can also translate 'Logout' here if you want */}
-              {t("logout")} 
+              {t("logout")}
             </Button>
           </div>
         )}

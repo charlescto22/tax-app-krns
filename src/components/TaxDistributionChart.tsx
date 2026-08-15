@@ -6,7 +6,7 @@ import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { Loader2 } from "lucide-react";
 import { useLanguage } from "../contexts/LanguageContext";
 
-const COLORS = ["#2563eb", "#3b82f6", "#60a5fa", "#93c5fd", "#dbeafe", "#1e40af", "#1e3a8a"];
+const COLORS = ["#0A4D68", "#0D9488", "#C9A227", "#64748B", "#B45309", "#0F766E", "#1E3A5F"];
 
 export function TaxDistributionChart() {
   const [data, setData] = useState<{ name: string; value: number; percentage: number }[]>([]);

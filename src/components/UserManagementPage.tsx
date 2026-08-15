@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Checkbox } from "./ui/checkbox"; // Need to import Checkbox
 import { Plus, Edit, Trash2, UserCheck, Users as UsersIcon, Loader2, ShieldCheck } from "lucide-react";
 import type { UserRole } from "../App";
+import { PageHeader } from "./PageHeader";
 
 // Firebase Imports
 import { db, auth } from "../firebase"; 
@@ -217,15 +218,17 @@ export function UserManagementPage() {
 
   return (
     <>
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-gray-900 mb-2">User Management</h1>
-          <p className="text-gray-600">Manage accounts, departments, and tax permissions</p>
-        </div>
-        <Button className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto" onClick={handleAddUser}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add New User
-        </Button>
+      <div className="mb-6">
+        <PageHeader
+          title="User Management"
+          description="Manage accounts, departments, and tax permissions"
+          actions={
+            <Button className="bg-primary text-primary-foreground hover:bg-primary/90 w-full sm:w-auto" onClick={handleAddUser}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add New User
+            </Button>
+          }
+        />
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -311,7 +314,7 @@ export function UserManagementPage() {
             {formData.role === "tax-collector" && (
               <div className="space-y-3 border rounded-md p-4 bg-gray-50">
                 <div className="flex items-center gap-2">
-                  <ShieldCheck className="h-4 w-4 text-blue-600" />
+                  <ShieldCheck className="h-4 w-4 text-brand" />
                   <Label className="text-blue-900 font-medium">Authorized Tax Types</Label>
                 </div>
                 <p className="text-xs text-gray-500">Select which taxes this user is allowed to collect.</p>
@@ -356,7 +359,7 @@ export function UserManagementPage() {
               Cancel
             </Button>
             <Button 
-              className="flex-1 bg-blue-600 hover:bg-blue-700" 
+              className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90" 
               onClick={handleSaveUser}
               disabled={loading}
             >
@@ -374,7 +377,7 @@ export function UserManagementPage() {
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-gray-600">Total Users</CardTitle>
-              <UsersIcon className="h-5 w-5 text-blue-600" />
+              <UsersIcon className="h-5 w-5 text-brand" />
             </div>
           </CardHeader>
           <CardContent>
@@ -386,7 +389,7 @@ export function UserManagementPage() {
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-gray-600">Administrators</CardTitle>
-              <UserCheck className="h-5 w-5 text-blue-600" />
+              <UserCheck className="h-5 w-5 text-brand" />
             </div>
           </CardHeader>
           <CardContent>

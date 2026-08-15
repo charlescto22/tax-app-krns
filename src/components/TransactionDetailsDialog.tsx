@@ -22,7 +22,7 @@ export function TransactionDetailsDialog({ transaction, isOpen, onClose }: Trans
 
   const getIcon = (type: string) => {
     switch (type) {
-      case "trade": return <Package className="h-5 w-5 text-blue-600" />;
+      case "trade": return <Package className="h-5 w-5 text-brand" />;
       case "road": return <Truck className="h-5 w-5 text-orange-600" />;
       case "land": return <TreePine className="h-5 w-5 text-green-600" />;
       default: return <FileText className="h-5 w-5 text-gray-600" />;

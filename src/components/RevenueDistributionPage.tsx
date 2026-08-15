@@ -46,6 +46,7 @@ import {
 } from "lucide-react";
 import { PieChart as RechartsPie, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 import type { UserRole } from "../App";
+import { PageHeader } from "./PageHeader";
 
 interface DistributionCategory {
   id: string;
@@ -86,7 +87,7 @@ export function RevenueDistributionPage({ userRole }: RevenueDistributionPagePro
       name: "IEC Central Fund",
       percentage: 30,
       amount: 0,
-      color: "#3b82f6", // Blue
+      color: "#0A4D68", // Brand primary
       icon: Building2,
       isPaid: false,
     },
@@ -246,14 +247,10 @@ export function RevenueDistributionPage({ userRole }: RevenueDistributionPagePro
   return (
     <div className="space-y-4">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-gray-900">November 2025 - Revenue Distribution Plan</h1>
-          <p className="text-gray-600">
-            Central Treasury: Coalition revenue split-sheet and payout execution
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
+      <PageHeader
+        title="November 2025 - Revenue Distribution Plan"
+        description="Central Treasury: Coalition revenue split-sheet and payout execution"
+        actions={
           <Badge
             variant="outline"
             className={`${
@@ -274,8 +271,8 @@ export function RevenueDistributionPage({ userRole }: RevenueDistributionPagePro
               </>
             )}
           </Badge>
-        </div>
-      </div>
+        }
+      />
 
       {/* Success Message */}
       {successMessage && (
@@ -286,21 +283,21 @@ export function RevenueDistributionPage({ userRole }: RevenueDistributionPagePro
       )}
 
       {/* Total Revenue Card */}
-      <Card className="border-2 border-blue-200 bg-blue-50">
+      <Card className="brand-callout border-2">
         <CardContent className="pt-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <div className="flex items-center gap-2 text-blue-700 mb-2">
+              <div className="flex items-center gap-2 text-brand mb-2">
                 <DollarSign className="h-5 w-5" />
                 <span className="text-sm">Total Verified Revenue (From Reconciliation)</span>
               </div>
-              <div className="text-4xl text-blue-900">{totalRevenue.toLocaleString()}</div>
-              <div className="text-sm text-blue-600 mt-1">MMK (Myanmar Kyat)</div>
+              <div className="text-4xl text-foreground">{totalRevenue.toLocaleString()}</div>
+              <div className="text-sm text-brand mt-1">MMK (Myanmar Kyat)</div>
             </div>
             <div className="text-right">
-              <div className="text-sm text-blue-700 mb-1">Distribution Progress</div>
-              <div className="text-2xl text-blue-900">{paidCount}/{categories.length}</div>
-              <div className="text-xs text-blue-600">Payments Completed</div>
+              <div className="text-sm text-muted-foreground mb-1">Distribution Progress</div>
+              <div className="text-2xl text-foreground">{paidCount}/{categories.length}</div>
+              <div className="text-xs text-brand">Payments Completed</div>
             </div>
           </div>
 
@@ -308,8 +305,8 @@ export function RevenueDistributionPage({ userRole }: RevenueDistributionPagePro
 
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-blue-700">Overall Progress</span>
-              <span className="text-blue-900">{progressPercentage.toFixed(0)}%</span>
+              <span className="text-muted-foreground">Overall Progress</span>
+              <span className="text-foreground">{progressPercentage.toFixed(0)}%</span>
             </div>
             <Progress value={progressPercentage} className="h-3" />
           </div>
@@ -671,7 +668,7 @@ export function RevenueDistributionPage({ userRole }: RevenueDistributionPagePro
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Receipt className="h-5 w-5 text-blue-600" />
+              <Receipt className="h-5 w-5 text-brand" />
               Record Payment Execution
             </DialogTitle>
             <DialogDescription>
@@ -771,7 +768,7 @@ export function RevenueDistributionPage({ userRole }: RevenueDistributionPagePro
               </div>
 
               <Alert className="bg-blue-50 border-blue-200">
-                <AlertCircle className="h-4 w-4 text-blue-600" />
+                <AlertCircle className="h-4 w-4 text-brand" />
                 <AlertDescription className="text-blue-800 text-sm">
                   This action will mark the payment as completed and record it in the audit trail.
                   Ensure all information is accurate before confirming.

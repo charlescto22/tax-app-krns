@@ -8,6 +8,7 @@ import { Switch } from "./ui/switch";
 import { Separator } from "./ui/separator";
 import { User, Bell, Shield, Database, Mail, Lock, Loader2 } from "lucide-react";
 import type { User as UserType } from "../App";
+import { PageHeader } from "./PageHeader";
 import { auth, db } from "../firebase";
 import { updateProfile, updatePassword } from "firebase/auth";
 import { doc, updateDoc } from "firebase/firestore";
@@ -101,8 +102,10 @@ export function SettingsPage({ currentUser }: SettingsPageProps) {
   return (
     <>
       <div className="mb-6">
-        <h1 className="text-gray-900 mb-2">User Settings</h1>
-        <p className="text-gray-600">Manage your account preferences and system settings</p>
+        <PageHeader
+          title="User Settings"
+          description="Manage your account preferences and system settings"
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -132,7 +135,7 @@ export function SettingsPage({ currentUser }: SettingsPageProps) {
                 <p className="text-xs text-gray-500">Email cannot be changed.</p>
               </div>
               <Button 
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
                 onClick={handleUpdateProfile}
                 disabled={profileLoading}
               >

@@ -13,8 +13,8 @@ export default defineConfig({
         name: 'IEC Tax Admin',
         short_name: 'TaxPOS',
         description: 'Karenni State Tax Administration POS',
-        theme_color: '#2563eb',
-        background_color: '#ffffff',
+        theme_color: '#0A4D68',
+        background_color: '#EEF2F5',
         // 🟢 CRITICAL: This tells the browser "Hide the address bar!"
         display: 'standalone', 
         scope: '/',

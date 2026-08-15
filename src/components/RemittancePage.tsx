@@ -4,6 +4,7 @@ import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Send, Clock, CheckCircle } from "lucide-react";
 import type { UserRole } from "../App";
+import { PageHeader } from "./PageHeader";
 
 const remittances = [
   { id: "1", date: "2025-11-20", station: "Pasaela Gate", amount: "MMK 1,245,000", status: "Completed", reference: "RMT-2025-001" },
@@ -20,15 +21,17 @@ interface RemittancePageProps {
 export function RemittancePage({ userRole }: RemittancePageProps) {
   return (
     <>
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-gray-900 mb-2">Remittance Management</h1>
-          <p className="text-gray-600">Track and manage fund transfers to central treasury</p>
-        </div>
-        <Button className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto">
-          <Send className="h-4 w-4 mr-2" />
-          New Remittance
-        </Button>
+      <div className="mb-6">
+        <PageHeader
+          title="Remittance Management"
+          description="Track and manage fund transfers to central treasury"
+          actions={
+            <Button className="bg-primary text-primary-foreground hover:bg-primary/90 w-full sm:w-auto">
+              <Send className="h-4 w-4 mr-2" />
+              New Remittance
+            </Button>
+          }
+        />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">

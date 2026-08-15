@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Textarea } from "./ui/textarea";
 import { ArrowLeft, Save, User, Building2, MapPin, FileText } from "lucide-react";
 import { useLanguage } from "../contexts/LanguageContext";
+import { PageHeader } from "./PageHeader";
 
 interface TaxPayerFormProps {
   onBack: () => void;
@@ -115,8 +116,7 @@ export function TaxPayerForm({ onBack }: TaxPayerFormProps) {
       </div>
 
       <div>
-        <h1 className="text-gray-900 mb-2">{t("taxPayerRegistrationForm")}</h1>
-        <p className="text-gray-600">{t("taxCalculatorDesc")}</p>
+        <PageHeader title={t("taxPayerRegistrationForm")} description={t("taxCalculatorDesc")} />
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -124,7 +124,7 @@ export function TaxPayerForm({ onBack }: TaxPayerFormProps) {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <User className="h-5 w-5 text-blue-600" />
+              <User className="h-5 w-5 text-brand" />
               <CardTitle>{t("taxPayerInformation")}</CardTitle>
             </div>
             <CardDescription>{t("taxPayerInformationDesc")}</CardDescription>
@@ -196,7 +196,7 @@ export function TaxPayerForm({ onBack }: TaxPayerFormProps) {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <MapPin className="h-5 w-5 text-blue-600" />
+              <MapPin className="h-5 w-5 text-brand" />
               <CardTitle>{t("addressInformation")}</CardTitle>
             </div>
             <CardDescription>{t("addressInformationDesc")}</CardDescription>
@@ -270,7 +270,7 @@ export function TaxPayerForm({ onBack }: TaxPayerFormProps) {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <FileText className="h-5 w-5 text-blue-600" />
+              <FileText className="h-5 w-5 text-brand" />
               <CardTitle>{t("taxCollectionDetails")}</CardTitle>
             </div>
             <CardDescription>{t("taxTypeAndPaymentInfo")}</CardDescription>
@@ -402,7 +402,7 @@ export function TaxPayerForm({ onBack }: TaxPayerFormProps) {
               </Button>
               <Button
                 type="submit"
-                className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
+                className="bg-primary text-primary-foreground hover:bg-primary/90 w-full sm:w-auto"
                 disabled={isSubmitting}
               >
                 <Save className="h-4 w-4 mr-2" />

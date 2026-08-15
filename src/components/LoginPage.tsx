@@ -7,6 +7,9 @@ import { Alert, AlertDescription } from "./ui/alert";
 import { Checkbox } from "./ui/checkbox";
 import { Eye, EyeOff, Lock, Mail, AlertCircle, Shield, CheckCircle2, Loader2 } from "lucide-react";
 import type { User } from "../App";
+import { BrandMark } from "./BrandMark";
+import { LanguageSwitcher } from "./LanguageSwitcher";
+import { useLanguage } from "../contexts/LanguageContext";
 
 // Firebase Imports
 import { auth, db } from "../firebase";
@@ -18,6 +21,7 @@ interface LoginPageProps {
 }
 
 export function LoginPage({ onLoginSuccess }: LoginPageProps) {
+  const { t } = useLanguage();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -25,7 +29,6 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // Password strength indicators
   const [passwordStrength, setPasswordStrength] = useState({
     hasLength: false,
     hasUpper: false,
@@ -34,7 +37,6 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
     hasSpecial: false,
   });
 
-  // Check for saved email on mount
   useEffect(() => {
     const savedRemember = localStorage.getItem("rememberMe");
     if (savedRemember) {
@@ -73,24 +75,21 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
     setError("");
 
     if (!email || !password) {
-      setError("Please enter both email and password.");
+      setError(t("loginErrorRequired"));
       return;
     }
 
     if (!validateEmail(email)) {
-      setError("Please enter a valid email address.");
+      setError(t("loginErrorInvalidEmail"));
       return;
     }
 
     setIsLoading(true);
 
     try {
-      // 1. Authenticate with Firebase Auth
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const firebaseUser = userCredential.user;
 
-      // 2. Fetch User Role & Name from Firestore
-      // (We assume there is a 'users' collection with documents matching the UID)
       const userDocRef = doc(db, "users", firebaseUser.uid);
       const userDoc = await getDoc(userDocRef);
 
@@ -102,45 +101,46 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
           id: firebaseUser.uid,
           email: firebaseUser.email || "",
           name: data.name || "Unknown User",
-          role: data.role || "tax-collector", // Default role if missing
+          role: data.role || "tax-collector",
         };
       } else {
-        // Fallback for initial admin setup (or if user doc is missing)
-        // WARNING: In production, you should ensure every user has a Firestore doc.
         console.warn("User document not found in Firestore. Using fallback.");
         userData = {
           id: firebaseUser.uid,
           email: firebaseUser.email || "",
-          name: firebaseUser.email?.split('@')[0] || "User",
-          role: "administrator", // Temporary fallback for testing your first user
+          name: firebaseUser.email?.split("@")[0] || "User",
+          role: "administrator",
         };
       }
 
-      // 3. Handle "Remember Me"
       if (rememberMe) {
         localStorage.setItem("rememberMe", JSON.stringify({ email: email }));
       } else {
         localStorage.removeItem("rememberMe");
       }
 
-      // 4. Create Session
-      sessionStorage.setItem("userSession", JSON.stringify({
-        user: userData,
-        timestamp: Date.now(),
-      }));
+      sessionStorage.setItem(
+        "userSession",
+        JSON.stringify({
+          user: userData,
+          timestamp: Date.now(),
+        })
+      );
 
       onLoginSuccess(userData);
-
     } catch (err: any) {
       console.error("Login error:", err);
-      
-      // Handle Firebase specific errors
-      if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
-        setError("Invalid email or password.");
-      } else if (err.code === 'auth/too-many-requests') {
-        setError("Account temporarily locked due to too many failed attempts. Please try again later.");
+
+      if (
+        err.code === "auth/invalid-credential" ||
+        err.code === "auth/user-not-found" ||
+        err.code === "auth/wrong-password"
+      ) {
+        setError(t("loginErrorInvalidCredentials"));
+      } else if (err.code === "auth/too-many-requests") {
+        setError(t("loginErrorLocked"));
       } else {
-        setError("An error occurred. Please check your connection and try again.");
+        setError(t("loginErrorGeneric"));
       }
     } finally {
       setIsLoading(false);
@@ -148,46 +148,42 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-6">
-        {/* Logo and Header */}
-        <div className="text-center space-y-2">
+    <div className="login-atmosphere">
+      <div className="absolute top-4 right-4 z-10">
+        <LanguageSwitcher />
+      </div>
+
+      <div className="login-panel space-y-6">
+        <div className="text-center space-y-2 login-enter">
           <div className="flex justify-center mb-4">
-            <div className="w-16 h-16 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white text-2xl">IEC</span>
-            </div>
+            <BrandMark size="lg" />
           </div>
-          <h1 className="text-gray-900">Tax Administration Portal</h1>
-          <p className="text-gray-600">Secure Government Access</p>
-          <div className="flex items-center justify-center gap-2 text-green-600">
+          <h1 className="text-white text-xl font-semibold">{t("appName")}</h1>
+          <p className="text-white text-sm" style={{ opacity: 0.9 }}>
+            {t("loginSubtitle")}
+          </p>
+          <div className="flex items-center justify-center gap-2 text-white text-sm" style={{ opacity: 0.85 }}>
             <Shield className="h-4 w-4" />
-            <span className="text-sm">Secured by Firebase Auth</span>
+            <span>{t("loginSecureBadge")}</span>
           </div>
         </div>
 
-        {/* Login Card */}
-        <Card className="border-2">
+        <Card className="border-2 login-enter-delay bg-card">
           <CardHeader>
-            <CardTitle>Sign In</CardTitle>
-            <CardDescription>
-              Enter your credentials to access the dashboard
-            </CardDescription>
+            <CardTitle>{t("loginSignIn")}</CardTitle>
+            <CardDescription>{t("loginSignInDesc")}</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">
-              {/* Error Alert */}
               {error && (
                 <Alert className="bg-red-50 border-red-200">
                   <AlertCircle className="h-4 w-4 text-red-600" />
-                  <AlertDescription className="text-red-800">
-                    {error}
-                  </AlertDescription>
+                  <AlertDescription className="text-red-800">{error}</AlertDescription>
                 </Alert>
               )}
 
-              {/* Email Field */}
               <div className="space-y-2">
-                <Label htmlFor="email">Email Address *</Label>
+                <Label htmlFor="email">{t("loginEmail")} *</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Input
@@ -204,15 +200,14 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
                 </div>
               </div>
 
-              {/* Password Field */}
               <div className="space-y-2">
-                <Label htmlFor="password">Password *</Label>
+                <Label htmlFor="password">{t("loginPassword")} *</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="Enter your password"
+                    placeholder={t("loginPasswordPlaceholder")}
                     value={password}
                     onChange={(e) => handlePasswordChange(e.target.value)}
                     className="pl-10 pr-10"
@@ -235,22 +230,21 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
                     )}
                   </Button>
                 </div>
-                
-                {/* Password Strength Indicator */}
+
                 {password && (
                   <div className="space-y-1 text-xs">
                     <div className="flex items-center gap-2">
-                      <CheckCircle2 className={`h-3 w-3 ${passwordStrength.hasLength ? 'text-green-600' : 'text-gray-300'}`} />
-                      <span className={passwordStrength.hasLength ? 'text-green-600' : 'text-gray-500'}>
-                        At least 8 characters
+                      <CheckCircle2
+                        className={`h-3 w-3 ${passwordStrength.hasLength ? "text-green-600" : "text-gray-300"}`}
+                      />
+                      <span className={passwordStrength.hasLength ? "text-green-600" : "text-gray-500"}>
+                        {t("loginPasswordLength")}
                       </span>
                     </div>
-                    {/* ... (rest of strength indicators can remain or be simplified) */}
                   </div>
                 )}
               </div>
 
-              {/* Remember Me */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <Checkbox
@@ -259,46 +253,41 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
                     onCheckedChange={(checked) => setRememberMe(checked as boolean)}
                     disabled={isLoading}
                   />
-                  <Label
-                    htmlFor="remember"
-                    className="text-sm cursor-pointer"
-                  >
-                    Remember me
+                  <Label htmlFor="remember" className="text-sm cursor-pointer">
+                    {t("loginRememberMe")}
                   </Label>
                 </div>
                 <Button
                   type="button"
                   variant="link"
-                  className="text-sm text-blue-600 hover:text-blue-700 px-0"
+                  className="text-sm text-link-primary px-0"
                   disabled={isLoading}
                 >
-                  Forgot password?
+                  {t("loginForgotPassword")}
                 </Button>
               </div>
 
-              {/* Submit Button */}
               <Button
                 type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700"
+                className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
                 disabled={isLoading}
               >
                 {isLoading ? (
                   <div className="flex items-center gap-2">
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Signing in...
+                    {t("loginSigningIn")}
                   </div>
                 ) : (
-                  "Sign In"
+                  t("loginSignIn")
                 )}
               </Button>
             </form>
           </CardContent>
         </Card>
 
-        {/* Footer */}
-        <div className="text-center text-sm text-gray-500">
-          <p>© 2025 Tax Administration Department</p>
-          <p>Government Portal - Authorized Access Only</p>
+        <div className="text-center text-sm text-white login-enter-delay" style={{ opacity: 0.85 }}>
+          <p>{t("loginFooterCopyright")}</p>
+          <p>{t("loginFooterAuthorized")}</p>
         </div>
       </div>
     </div>

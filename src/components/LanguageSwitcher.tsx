@@ -9,7 +9,7 @@ export function LanguageSwitcher() {
       variant="outline"
       size="sm"
       onClick={() => setLanguage(language === "en" ? "mm" : "en")}
-      className="w-12 font-bold"
+      className="w-12 font-semibold bg-card text-foreground border-gray-200"
     >
       {language === "en" ? "MM" : "EN"}
     </Button>

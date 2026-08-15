@@ -86,7 +86,7 @@ export function RevenueChart() {
               <Legend />
               <Bar
                 dataKey="revenue"
-                fill="#2563eb"
+                fill="#0A4D68"
                 radius={[4, 4, 0, 0]}
                 name="Revenue (MMK)"
               />

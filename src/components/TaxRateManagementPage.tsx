@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Alert, AlertDescription } from "./ui/alert";
 import { Settings, Plus, Edit, Trash2, Save, X, Package, Truck, TreePine, AlertCircle, CheckCircle } from "lucide-react";
+import { PageHeader } from "./PageHeader";
 
 // Initial rate data
 const initialCommodityRates = [
@@ -276,13 +277,13 @@ export function TaxRateManagementPage() {
       <CardHeader>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <Icon className="h-5 w-5 text-blue-600" />
+            <Icon className="h-5 w-5 text-brand" />
             <div>
               <CardTitle>{label}</CardTitle>
               <CardDescription>Manage {label.toLowerCase()} and their tax rates</CardDescription>
             </div>
           </div>
-          <Button onClick={() => handleAdd(type)} className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto">
+          <Button onClick={() => handleAdd(type)} className="bg-primary text-primary-foreground hover:bg-primary/90 w-full sm:w-auto">
             <Plus className="h-4 w-4 mr-2" />
             Add New
           </Button>
@@ -384,13 +385,13 @@ export function TaxRateManagementPage() {
       <CardHeader>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <Settings className="h-5 w-5 text-blue-600" />
+            <Settings className="h-5 w-5 text-brand" />
             <div>
               <CardTitle>Tax Categories</CardTitle>
               <CardDescription>Manage available tax categories and types</CardDescription>
             </div>
           </div>
-          <Button onClick={() => handleAdd("category")} className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto">
+          <Button onClick={() => handleAdd("category")} className="bg-primary text-primary-foreground hover:bg-primary/90 w-full sm:w-auto">
             <Plus className="h-4 w-4 mr-2" />
             Add Category
           </Button>
@@ -501,10 +502,10 @@ export function TaxRateManagementPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-gray-900 mb-2">Tax Rate Management</h1>
-        <p className="text-gray-600">Configure tax categories, goods types, and their associated rates</p>
-      </div>
+      <PageHeader
+        title="Tax Rate Management"
+        description="Configure tax categories, goods types, and their associated rates"
+      />
 
       {showSuccess && (
         <Alert className="bg-green-50 border-green-200">
@@ -655,7 +656,7 @@ export function TaxRateManagementPage() {
               <X className="h-4 w-4 mr-2" />
               Cancel
             </Button>
-            <Button onClick={handleSaveEdit} className="bg-blue-600 hover:bg-blue-700">
+            <Button onClick={handleSaveEdit} className="bg-primary text-primary-foreground hover:bg-primary/90">
               <Save className="h-4 w-4 mr-2" />
               Save Changes
             </Button>
@@ -747,7 +748,7 @@ export function TaxRateManagementPage() {
               <X className="h-4 w-4 mr-2" />
               Cancel
             </Button>
-            <Button onClick={handleSaveAdd} className="bg-blue-600 hover:bg-blue-700">
+            <Button onClick={handleSaveAdd} className="bg-primary text-primary-foreground hover:bg-primary/90">
               <Plus className="h-4 w-4 mr-2" />
               Add {currentTab === "category" ? "Category" : "Rate"}
             </Button>

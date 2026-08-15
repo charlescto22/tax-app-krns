@@ -79,7 +79,7 @@ export function MetricsCards() {
 
   // 1. Create a color dictionary mapping
   const colorStyles: Record<string, { bg: string; text: string }> = {
-    blue: { bg: "bg-blue-100", text: "text-blue-600" },
+    blue: { bg: "bg-primary/20", text: "text-brand" },
     green: { bg: "bg-green-100", text: "text-green-600" },
     orange: { bg: "bg-orange-100", text: "text-orange-600" },
     purple: { bg: "bg-purple-100", text: "text-purple-600" },
@@ -139,7 +139,7 @@ export function MetricsCards() {
         return (
           <Card key={metric.title} className={metric.alert ? "border-orange-300 bg-orange-50" : ""}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
                 {metric.title}
               </CardTitle>
               {/* 3. Apply the full classes here */}
@@ -148,8 +148,8 @@ export function MetricsCards() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-gray-900">{metric.value}</div>
-              <p className="text-xs text-gray-500 mt-1">{metric.subtitle}</p>
+              <div className="text-2xl font-semibold text-foreground">{metric.value}</div>
+              <p className="text-xs text-muted-foreground mt-1">{metric.subtitle}</p>
             </CardContent>
           </Card>
         );

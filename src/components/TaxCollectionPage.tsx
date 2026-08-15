@@ -6,6 +6,7 @@ import { Plus, Download, Filter, Eye, Lock, Calculator } from "lucide-react";
 import type { UserRole } from "../App";
 import { useState, useEffect } from "react";
 import { TaxPayerForm } from "./TaxPayerForm";
+import { PageHeader } from "./PageHeader";
 import { useLanguage } from "../contexts/LanguageContext";
 // 👇 1. Import Firebase 👇
 import { db } from "../firebase";
@@ -94,21 +95,19 @@ export function TaxCollectionPage({ userRole, onNavigateToCalculation }: TaxColl
 
   return (
     <>
-      <div>
-        <h1 className="text-gray-900 mb-2">{t("taxCollection")}</h1>
-        <p className="text-gray-600">
-          {isReadOnly ? t("taxCollectionDescUser") : t("taxCollectionDescAdmin")}
-        </p>
-        {isReadOnly && (
-          <div className="flex items-center gap-2 mt-2">
-            <Lock className="h-4 w-4 text-orange-600" />
-            <span className="text-orange-600">{t("viewOnly")}</span>
-          </div>
-        )}
-      </div>
+      <PageHeader
+        title={t("taxCollection")}
+        description={isReadOnly ? t("taxCollectionDescUser") : t("taxCollectionDescAdmin")}
+      />
+      {isReadOnly && (
+        <div className="flex items-center gap-2 -mt-2">
+          <Lock className="h-4 w-4 text-orange-600" />
+          <span className="text-orange-600">{t("viewOnly")}</span>
+        </div>
+      )}
       
       {!isReadOnly && (
-        <div className="flex flex-wrap gap-2 mb-6 mt-4">
+        <div className="flex flex-wrap gap-2 mb-6 mt-2">
           <Button variant="outline" className="flex-1 sm:flex-none">
             <Filter className="h-4 w-4 mr-2" />
             <span className="hidden sm:inline">{t("filter")}</span>
@@ -118,7 +117,7 @@ export function TaxCollectionPage({ userRole, onNavigateToCalculation }: TaxColl
             <span className="hidden sm:inline">{t("export")}</span>
           </Button>
           <Button
-            className="bg-blue-600 hover:bg-blue-700 flex-1 sm:flex-none"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 flex-1 sm:flex-none"
             onClick={onNavigateToCalculation}
           >
             <Calculator className="h-4 w-4 mr-2" />
@@ -130,21 +129,21 @@ export function TaxCollectionPage({ userRole, onNavigateToCalculation }: TaxColl
 
       {/* Quick Action Card */}
       {!isReadOnly && (
-        <Card className="border-blue-200 bg-blue-50/50 mb-6">
+        <Card className="brand-callout mb-6">
           <CardContent className="pt-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-start gap-3">
-                <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
+                <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
                   <Calculator className="h-5 w-5 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-gray-900 mb-1">{t("createNewCollection")}</h3>
-                  <p className="text-gray-600">{t("createNewCollectionDesc")}</p>
+                  <h3 className="text-foreground mb-1">{t("createNewCollection")}</h3>
+                  <p className="text-muted-foreground">{t("createNewCollectionDesc")}</p>
                 </div>
               </div>
               <Button 
                 onClick={onNavigateToCalculation}
-                className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto whitespace-nowrap"
+                className="bg-primary text-primary-foreground hover:bg-primary/90 w-full sm:w-auto whitespace-nowrap"
               >
                 {t("goToCalculator")}
               </Button>

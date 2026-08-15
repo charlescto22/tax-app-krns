@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card";
 import { Button } from "./ui/button";
 import { FileText, Download, Calendar, TrendingUp, BarChart3, PieChart, Loader2 } from "lucide-react";
+import { PageHeader } from "./PageHeader";
 import { exportToCSV } from "../utils/exportUtils";
 import { db } from "../firebase";
 import { collection, getDocs, query, where } from "firebase/firestore";
@@ -106,8 +107,10 @@ export function ReportsPage() {
   return (
     <>
       <div className="mb-6">
-        <h1 className="text-gray-900 mb-2">Reports</h1>
-        <p className="text-gray-600">Generate and download various tax administration reports</p>
+        <PageHeader
+          title="Reports"
+          description="Generate and download various tax administration reports"
+        />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -140,7 +143,7 @@ export function ReportsPage() {
                   </Button>
                   <Button 
                     size="sm" 
-                    className="flex-1 bg-blue-600 hover:bg-blue-700"
+                    className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
                     onClick={() => handleGenerateReport(report.title)}
                   >
                     <Download className="h-4 w-4 mr-1" />
@@ -166,7 +169,7 @@ export function ReportsPage() {
           <div className="border rounded-md overflow-auto flex-1 my-4">
             {isLoading ? (
               <div className="flex items-center justify-center h-32">
-                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                <Loader2 className="h-8 w-8 animate-spin text-brand" />
               </div>
             ) : previewData.length === 0 ? (
               <div className="text-center py-8 text-gray-500">No data found for this report.</div>

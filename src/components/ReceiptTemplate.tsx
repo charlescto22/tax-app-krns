@@ -101,7 +101,7 @@ export const ReceiptTemplate = forwardRef<HTMLDivElement, ReceiptTemplateProps>(
 
         {/* Receipt Content */}
         <div className="header">
-          <div className="title">IEC TAX DEPARTMENT</div>
+          <div className="title">IEC TAXATION</div>
           <div className="subtitle">Karenni State Government</div>
           <div className="subtitle">Official Tax Receipt</div>
         </div>

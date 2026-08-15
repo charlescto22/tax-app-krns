@@ -1,0 +1,157 @@
+/* IEC Taxation — State Authority brand layer */
+
+:root {
+  --brand-primary: #0a4d68;
+  --brand-primary-foreground: #f8fafb;
+  --brand-accent: #c9a227;
+  --brand-mist: #eef2f5;
+  --brand-ink: #0f172a;
+  --font-sans: "Source Sans 3", "Noto Sans Myanmar", ui-sans-serif, sans-serif;
+}
+
+html {
+  font-family: var(--font-sans);
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--foreground);
+  background-color: var(--background);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Brand mark */
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  background: var(--brand-primary);
+  color: var(--brand-primary-foreground);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  box-shadow: 0 0 0 2px var(--brand-accent);
+  flex-shrink: 0;
+}
+
+.brand-mark--sm {
+  width: 2rem;
+  height: 2rem;
+  font-size: 0.625rem;
+}
+
+.brand-mark--md {
+  width: 2.75rem;
+  height: 2.75rem;
+  font-size: 0.75rem;
+}
+
+.brand-mark--lg {
+  width: 4.5rem;
+  height: 4.5rem;
+  font-size: 1.25rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 0 0 3px var(--brand-accent);
+}
+
+/* Login atmosphere */
+.login-atmosphere {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background:
+    linear-gradient(155deg, #0a4d68 0%, #0d5f7c 38%, #eef2f5 78%, #f8fafc 100%);
+  overflow: hidden;
+}
+
+.login-atmosphere::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.55), transparent 70%);
+  pointer-events: none;
+}
+
+.login-panel {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 28rem;
+}
+
+.login-enter {
+  animation: brand-fade-up 0.55s ease-out both;
+}
+
+.login-enter-delay {
+  animation: brand-fade-up 0.55s ease-out 0.12s both;
+}
+
+@keyframes brand-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Sidebar active transition */
+.nav-item-active {
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.15s ease;
+}
+
+.nav-item-active:active {
+  transform: scale(0.98);
+}
+
+/* Page content enter on route change */
+.page-enter {
+  animation: page-fade 0.28s ease-out both;
+}
+
+@keyframes page-fade {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Gold accent utility (not in compiled Tailwind dump) */
+.brand-accent-text {
+  color: var(--brand-accent);
+}
+
+.brand-accent-ring {
+  box-shadow: 0 0 0 2px var(--brand-accent);
+}
+
+.brand-callout {
+  border: 1px solid color-mix(in oklab, var(--brand-primary) 22%, white);
+  background: color-mix(in oklab, var(--brand-primary) 7%, white);
+}
+
+.text-brand {
+  color: var(--brand-primary);
+}
+
+.text-link-primary {
+  color: var(--brand-primary);
+}
+
+.text-link-primary:hover {
+  color: #083d52;
+}

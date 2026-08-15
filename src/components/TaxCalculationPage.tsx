@@ -18,6 +18,7 @@ import { collection, addDoc, doc, getDoc } from "firebase/firestore";
 import { useReactToPrint } from "react-to-print";
 import { ReceiptTemplate } from "./ReceiptTemplate";
 import { useLanguage } from "../contexts/LanguageContext";
+import { PageHeader } from "./PageHeader";
 
 // Lookup tables for rates
 const COMMODITY_RATES = {
@@ -371,10 +372,7 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-gray-900 mb-2">{t("taxCalculation")}</h1>
-        <p className="text-gray-600">{t("taxCalculationDynamicDesc")}</p>
-      </div>
+      <PageHeader title={t("taxCalculation")} description={t("taxCalculationDynamicDesc")} />
 
       {calculationPath && (
         <Alert className={getPathColor()}>
@@ -394,7 +392,7 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Calculator className="h-5 w-5 text-blue-600" />
+            <Calculator className="h-5 w-5 text-brand" />
             <CardTitle>{t("step1SelectCategory")}</CardTitle>
           </div>
           <CardDescription>{t("chooseTaxTypeToCalculate")}</CardDescription>
@@ -486,10 +484,10 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
 
       {/* PATH A: Trade & Customs */}
       {calculationPath === "trade" && (
-        <Card className="border-blue-200 bg-blue-50/50">
+        <Card className="brand-callout">
           <CardHeader>
             <div className="flex items-center gap-2">
-              <Package className="h-5 w-5 text-blue-600" />
+              <Package className="h-5 w-5 text-brand" />
               <CardTitle>{t("pathATrade")}</CardTitle>
             </div>
             <CardDescription>{t("pathATradeDesc")}</CardDescription>
@@ -544,7 +542,7 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
             </div>
 
             <Alert className="bg-blue-100 border-blue-200">
-              <AlertCircle className="h-4 w-4 text-blue-600" />
+              <AlertCircle className="h-4 w-4 text-brand" />
               <AlertDescription className="text-blue-800">
                 <strong>{t("formula")}</strong> {t("formulaTrade")}
               </AlertDescription>
@@ -685,7 +683,7 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
         <Card className="border-2 border-blue-600">
           <CardHeader>
             <div className="flex items-center gap-2">
-              <DollarSign className="h-5 w-5 text-blue-600" />
+              <DollarSign className="h-5 w-5 text-brand" />
               <CardTitle>{t("totalPayableAmount")}</CardTitle>
             </div>
             <CardDescription>{t("finalCalculatedTax")}</CardDescription>
@@ -751,7 +749,7 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
               <Button
                 onClick={handleSave}
                 disabled={calculatedTax <= 0 || !taxpayerName}
-                className="bg-blue-600 hover:bg-blue-700 flex-1 sm:flex-none"
+                className="bg-primary text-primary-foreground hover:bg-primary/90 flex-1 sm:flex-none"
               >
                 <Save className="h-4 w-4 mr-2" />
                 {t("saveAndRecord")}
@@ -770,7 +768,7 @@ export function TaxCalculationPage({ onNavigateToCollection }: TaxCalculationPag
               <p>{t("selectCategoryToBegin")}</p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 text-left">
                 <div className="border rounded-lg p-4">
-                  <Package className="h-6 w-6 text-blue-600 mb-2" />
+                  <Package className="h-6 w-6 text-brand mb-2" />
                   <h3 className="text-gray-900 mb-1">{t("tradeAndCustoms")}</h3>
                   <p className="text-gray-600">{t("tradeInfoDesc")}</p>
                 </div>
