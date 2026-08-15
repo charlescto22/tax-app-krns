@@ -1,47 +1,60 @@
 # Production bootstrap (after merge to `main`)
 
-## Status blockers
+**Updated:** 2026-08-15 — see also `docs/CHAT_HANDOFF.md` for full chat continuity.
 
-GitHub Actions deploy is failing because the repository secret **`FIREBASE_TOKEN` is expired**.
+## Current status
 
-Regenerate it on a machine where you can log into Firebase:
+| Step | Status |
+|------|--------|
+| `FIREBASE_TOKEN` GitHub secret | Refreshed; CI deploys on `main` succeeding |
+| Deploy Firestore rules (`firestore:rules`) | Done via CI with hosting |
+| Seed demo admin profile | Done (`demo.admin@iec-tax.test`) |
+| Enable Google SSO | **Manual — still open** (Firebase Console) |
+
+---
+
+## If CI deploy fails again (expired token)
+
+Regenerate on a machine where you can log into Firebase:
 
 ```bash
 npx firebase login:ci
 ```
 
-Then in GitHub → **Settings → Secrets and variables → Actions**, update secret `FIREBASE_TOKEN` with the new token.
+Then in GitHub → **Settings → Secrets and variables → Actions**, update secret `FIREBASE_TOKEN`.
 
-Also confirm Hosting has a default site for project `tax-app-c410d` (Firebase Console → Hosting).
+Confirm Hosting has a default site for project `tax-app-c410d` (Firebase Console → Hosting).
 
-After updating the secret, re-run the failed workflow on `main`, or push an empty commit:
+Re-run the workflow on `main`, or:
 
 ```bash
 git commit --allow-empty -m "chore: redeploy after FIREBASE_TOKEN refresh"
 git push origin main
 ```
 
-That deploy now runs: `firebase deploy --only hosting,firestore:rules`.
+Deploy command used by CI: `firebase deploy --only hosting,firestore:rules`.
 
 ---
 
 ## 1) Deploy Firestore rules
 
-Done in repo + CI config. Completes automatically once `FIREBASE_TOKEN` is valid.
+Wired in repo (`firebase.json` → `"firestore": { "rules": "firestore.rules" }`) and CI.
 
-Rules include one-time self-bootstrap for `demo.admin@iec-tax.test` as administrator.
+Rules include a self-bootstrap create path for `demo.admin@iec-tax.test` as administrator. Tighten or remove once real admins exist.
 
 ## 2) Seed admin profile
-
-After rules are live:
 
 ```bash
 node scripts/seed-demo-admin.mjs
 ```
 
-Creates `users/{uid}` for `demo.admin@iec-tax.test` with role `administrator`.
+Creates/updates `users/{uid}` for:
 
-## 3) Enable Google SSO
+- Email: `demo.admin@iec-tax.test`
+- Password: `DemoAdmin@123!`
+- Role: `administrator`
+
+## 3) Enable Google SSO (remaining)
 
 Firebase Console (project **tax-app-c410d**):
 
