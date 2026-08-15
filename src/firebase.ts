@@ -17,5 +17,13 @@ const app = initializeApp(firebaseConfig);
 
 export const db = getFirestore(app);
 export const auth = getAuth(app);
+
+/** Google / Workspace OAuth — always show the account chooser. */
 export const googleProvider = new GoogleAuthProvider();
-googleProvider.setCustomParameters({ prompt: "select_account" });
+googleProvider.addScope("email");
+googleProvider.addScope("profile");
+googleProvider.setCustomParameters({
+  prompt: "select_account",
+  // Allow personal Gmail and Google Workspace accounts on the chooser.
+  access_type: "online",
+});

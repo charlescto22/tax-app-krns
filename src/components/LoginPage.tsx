@@ -14,9 +14,11 @@ import { useLanguage } from "../contexts/LanguageContext";
 import { auth, db, googleProvider } from "../firebase";
 import {
   signInWithEmailAndPassword,
-  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   sendPasswordResetEmail,
   signOut,
+  type User as FirebaseUser,
 } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import {
@@ -29,8 +31,33 @@ import {
 } from "../utils/userAdminApi";
 import type { ManagedUser } from "../types/userAdmin";
 
+const SSO_REDIRECT_FLAG = "iec.googleSsoRedirect";
+
 interface LoginPageProps {
   onLoginSuccess: (user: User) => void;
+}
+
+function GoogleGlyph({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        fill="#4285F4"
+        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+      />
+      <path
+        fill="#EA4335"
+        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+      />
+    </svg>
+  );
 }
 
 export function LoginPage({ onLoginSuccess }: LoginPageProps) {
@@ -42,6 +69,7 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState({
     hasLength: false,
     hasUpper: false,
@@ -197,61 +225,133 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
     }
   };
 
+  const mapGoogleSsoError = (err: any): string => {
+    if (err instanceof DeviceLimitError || err instanceof AccountInactiveError || err instanceof SsoPendingError) {
+      return err.message;
+    }
+    if (err?.code === "auth/popup-closed-by-user" || err?.code === "auth/cancelled-popup-request") {
+      return "Google sign-in was cancelled.";
+    }
+    if (err?.code === "auth/operation-not-allowed") {
+      return "Google SSO is not enabled in Firebase Console yet. Ask an admin to enable the Google provider.";
+    }
+    if (err?.code === "auth/unauthorized-domain") {
+      return "This domain is not authorized for Google sign-in. Add it under Firebase Authentication → Settings → Authorized domains.";
+    }
+    if (err?.code === "auth/account-exists-with-different-credential") {
+      return "An account already exists with this email using a different sign-in method. Sign in with email/password, or ask an admin to link Google SSO.";
+    }
+    return err?.message || "SSO sign-in failed.";
+  };
+
+  /** After Google Auth succeeds: enter app if approved/linked, else create SSO request. */
+  const finishGoogleSignIn = async (firebaseUser: FirebaseUser) => {
+    const emailAddr = (firebaseUser.email || "").toLowerCase();
+    if (!emailAddr) {
+      await signOut(auth);
+      throw new Error("Google did not return an email address. Use a Gmail or Google Workspace account that has an email.");
+    }
+
+    const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
+
+    if (userDoc.exists()) {
+      const profile = { id: firebaseUser.uid, ...userDoc.data() } as ManagedUser;
+      if (profile.ssoStatus === "pending") {
+        await signOut(auth);
+        throw new SsoPendingError();
+      }
+      if (profile.status === "inactive") {
+        await signOut(auth);
+        throw new AccountInactiveError();
+      }
+      await completeLogin(firebaseUser.uid, emailAddr, {
+        ...profile,
+        ssoEnabled: true,
+        ssoStatus: profile.ssoStatus || "approved",
+      });
+      return;
+    }
+
+    // New Google identity → create SSO approval request and sign out
+    await createSsoAccessRequest({
+      email: emailAddr,
+      displayName: firebaseUser.displayName || emailAddr.split("@")[0],
+      provider: "google",
+      providerUid: firebaseUser.uid,
+      requestedRole: "tax-collector",
+    });
+    await signOut(auth);
+    setInfo(
+      `Access requested for ${emailAddr}. An administrator must approve this Google / Workspace account in User Admin → SSO Approvals before you can enter.`
+    );
+  };
+
+  // Complete Google redirect when returning from accounts.google.com
+  useEffect(() => {
+    let cancelled = false;
+
+    const consumeRedirect = async () => {
+      const pending = sessionStorage.getItem(SSO_REDIRECT_FLAG) === "1";
+      try {
+        const result = await getRedirectResult(auth);
+        if (cancelled) return;
+
+        if (result?.user) {
+          sessionStorage.removeItem(SSO_REDIRECT_FLAG);
+          setIsGoogleLoading(true);
+          setError("");
+          setInfo("");
+          try {
+            await finishGoogleSignIn(result.user);
+          } catch (err: any) {
+            console.error("SSO redirect finish error:", err);
+            await signOut(auth).catch(() => undefined);
+            setError(mapGoogleSsoError(err));
+          } finally {
+            setIsGoogleLoading(false);
+          }
+          return;
+        }
+
+        if (pending) {
+          // Redirect returned without a user (user cancelled on Google page)
+          sessionStorage.removeItem(SSO_REDIRECT_FLAG);
+          setError("Google sign-in was cancelled before an account was selected.");
+        }
+      } catch (err: any) {
+        if (cancelled) return;
+        sessionStorage.removeItem(SSO_REDIRECT_FLAG);
+        console.error("SSO redirect error:", err);
+        await signOut(auth).catch(() => undefined);
+        setError(mapGoogleSsoError(err));
+        setIsGoogleLoading(false);
+      }
+    };
+
+    void consumeRedirect();
+    return () => {
+      cancelled = true;
+    };
+    // finishGoogleSignIn closes over latest completeLogin/onLoginSuccess; run once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleGoogleSso = async () => {
     setError("");
     setInfo("");
-    setIsLoading(true);
+    setIsGoogleLoading(true);
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      const firebaseUser = result.user;
-      const emailAddr = (firebaseUser.email || "").toLowerCase();
-      const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
-
-      if (userDoc.exists()) {
-        const profile = { id: firebaseUser.uid, ...userDoc.data() } as ManagedUser;
-        if (profile.ssoStatus === "pending") {
-          await signOut(auth);
-          throw new SsoPendingError();
-        }
-        if (profile.status === "inactive") {
-          await signOut(auth);
-          throw new AccountInactiveError();
-        }
-        // Existing linked user
-        await completeLogin(firebaseUser.uid, emailAddr, {
-          ...profile,
-          ssoEnabled: true,
-          ssoStatus: profile.ssoStatus || "approved",
-        });
-        return;
-      }
-
-      // New Google identity → create SSO approval request and sign out
-      await createSsoAccessRequest({
-        email: emailAddr,
-        displayName: firebaseUser.displayName || emailAddr.split("@")[0],
-        provider: "google",
-        providerUid: firebaseUser.uid,
-        requestedRole: "tax-collector",
-      });
-      await signOut(auth);
-      setInfo(
-        "SSO access requested. An administrator must approve your Google account before you can enter the app."
-      );
+      // Redirect flow avoids Cross-Origin-Opener-Policy breakage with signInWithPopup
+      // (popup often opens Google's email form and then fails to return the result).
+      sessionStorage.setItem(SSO_REDIRECT_FLAG, "1");
+      await signInWithRedirect(auth, googleProvider);
+      // Page navigates away; loading stays until redirect returns.
     } catch (err: any) {
       console.error("SSO error:", err);
+      sessionStorage.removeItem(SSO_REDIRECT_FLAG);
       await signOut(auth).catch(() => undefined);
-      if (err instanceof DeviceLimitError || err instanceof AccountInactiveError || err instanceof SsoPendingError) {
-        setError(err.message);
-      } else if (err?.code === "auth/popup-closed-by-user") {
-        setError("Google sign-in was cancelled.");
-      } else if (err?.code === "auth/operation-not-allowed") {
-        setError("Google SSO is not enabled in Firebase Console yet. Ask an admin to enable the Google provider.");
-      } else {
-        setError(err?.message || "SSO sign-in failed.");
-      }
-    } finally {
-      setIsLoading(false);
+      setError(mapGoogleSsoError(err));
+      setIsGoogleLoading(false);
     }
   };
 
@@ -384,7 +484,7 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
               <Button
                 type="submit"
                 className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
-                disabled={isLoading}
+                disabled={isLoading || isGoogleLoading}
               >
                 {isLoading ? (
                   <div className="flex items-center gap-2">
@@ -395,27 +495,38 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
                   t("loginSignIn")
                 )}
               </Button>
-
-              <div className="relative py-2">
-                <Separator />
-                <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-xs text-gray-500">
-                  or
-                </span>
-              </div>
-
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full"
-                disabled={isLoading}
-                onClick={handleGoogleSso}
-              >
-                Continue with Google (SSO)
-              </Button>
-              <p className="text-xs text-gray-500 text-center">
-                New SSO users require administrator approval before access is granted.
-              </p>
             </form>
+
+            <div className="relative py-4">
+              <Separator />
+              <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-xs text-gray-500">
+                or
+              </span>
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full gap-2"
+              disabled={isLoading || isGoogleLoading}
+              onClick={handleGoogleSso}
+            >
+              {isGoogleLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Opening Google account chooser…
+                </>
+              ) : (
+                <>
+                  <GoogleGlyph className="h-4 w-4" />
+                  Continue with Google
+                </>
+              )}
+            </Button>
+            <p className="text-xs text-gray-500 text-center mt-2">
+              You will be redirected to Google to choose a Gmail or Google Workspace account.
+              New accounts need administrator approval before access is granted.
+            </p>
           </CardContent>
         </Card>
 
