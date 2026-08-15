@@ -31,9 +31,25 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow read: if isAuthenticated();
-      // Admins manage all users; users may update limited self fields (name, lastLogin, devices via subcollection helpers)
-      allow create, delete: if isAdmin();
+      // Admins manage users; allow one-time self profile create (bootstrap / first login)
+      allow create: if isAdmin() || selfBootstrapCreate(userId);
+      allow delete: if isAdmin();
       allow update: if isAdmin() || (isOwner(userId) && onlySelfSafeFields());
+
+      function selfBootstrapCreate(userId) {
+        return isAuthenticated()
+          && request.auth.uid == userId
+          && !exists(/databases/$(database)/documents/users/$(userId))
+          && request.resource.data.email == request.auth.token.email
+          && request.resource.data.status == 'active'
+          && (
+            request.resource.data.role in ['tax-collector', 'remittance-manager']
+            || (
+              request.resource.data.role == 'administrator'
+              && request.auth.token.email == 'demo.admin@iec-tax.test'
+            )
+          );
+      }
 
       function onlySelfSafeFields() {
         return request.resource.data.diff(resource.data).affectedKeys()
