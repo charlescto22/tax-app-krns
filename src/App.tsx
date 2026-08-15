@@ -17,7 +17,10 @@ import { SettingsPage } from "./components/SettingsPage";
 import { UserManagementPage } from "./components/UserManagementPage";
 import { AdminSeeder } from "./components/AdminSeeder";
 import { PageHeader } from "./components/PageHeader";
+import { ForcePasswordChange } from "./components/ForcePasswordChange";
 import { useLanguage } from "./contexts/LanguageContext";
+import { auth } from "./firebase";
+import { signOut } from "firebase/auth";
 
 // User roles
 export type UserRole = "administrator" | "remittance-manager" | "tax-collector";
@@ -27,6 +30,7 @@ export interface User {
   name: string;
   role: UserRole;
   email: string;
+  mustChangePassword?: boolean;
 }
 
 // Session timeout: 15 minutes
@@ -162,7 +166,8 @@ export default function App() {
     // Clear all session data
     sessionStorage.removeItem("userSession");
     sessionStorage.removeItem("loginLockout");
-    
+    signOut(auth).catch(() => undefined);
+
     // Reset state
     setIsAuthenticated(false);
     setCurrentUser(null);
@@ -173,6 +178,28 @@ export default function App() {
   // If not authenticated, show login page
   if (!isAuthenticated || !currentUser) {
     return <LoginPage onLoginSuccess={handleLoginSuccess} />;
+  }
+
+  if (currentUser.mustChangePassword) {
+    return (
+      <ForcePasswordChange
+        userId={currentUser.id}
+        onCompleted={() => {
+          const updated = { ...currentUser, mustChangePassword: false };
+          setCurrentUser(updated);
+          const sessionData = sessionStorage.getItem("userSession");
+          if (sessionData) {
+            try {
+              const session = JSON.parse(sessionData);
+              session.user = updated;
+              sessionStorage.setItem("userSession", JSON.stringify(session));
+            } catch {
+              // ignore
+            }
+          }
+        }}
+      />
+    );
   }
 
   const renderPageContent = () => {

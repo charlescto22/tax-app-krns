@@ -1,14 +1,11 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Helper function to check if user is authenticated
+
     function isAuthenticated() {
       return request.auth != null;
     }
 
-    // Helper function to check user role (assuming role is stored in user's auth token or a separate collection)
-    // For simplicity in this example, we'll assume a 'users' collection
     function getUserData() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
@@ -17,25 +14,55 @@ service cloud.firestore {
       return isAuthenticated() && getUserData().role == role;
     }
 
-    // Rules for 'transactions' collection
-    match /transactions/{transactionId} {
-      // Read: All authenticated users can read (or restrict further if needed)
-      allow read: if isAuthenticated();
-      
-      // Create: Only tax collectors and admins can create
-      allow create: if isRole('tax-collector') || isRole('administrator');
-      
-      // Update: Only admins can update (e.g., approve/reject)
-      allow update: if isRole('administrator');
-      
-      // Delete: Only admins can delete
-      allow delete: if isRole('administrator');
+    function isAdmin() {
+      return isRole('administrator');
     }
-    
-    // Rules for 'users' collection
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    match /transactions/{transactionId} {
+      allow read: if isAuthenticated();
+      allow create: if isRole('tax-collector') || isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
     match /users/{userId} {
       allow read: if isAuthenticated();
-      allow write: if isRole('administrator');
+      // Admins manage all users; users may update limited self fields (name, lastLogin, devices via subcollection helpers)
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || (isOwner(userId) && onlySelfSafeFields());
+
+      function onlySelfSafeFields() {
+        return request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['name', 'lastLogin', 'passwordUpdatedAt', 'mustChangePassword']);
+      }
+
+      match /devices/{deviceId} {
+        allow read: if isAdmin() || isOwner(userId);
+        allow create: if isOwner(userId) || isAdmin();
+        allow update: if isAdmin() || isOwner(userId);
+        allow delete: if isAdmin();
+      }
+    }
+
+    match /ssoAccessRequests/{requestId} {
+      // Pending SSO applicants may create a request while authenticated via Google (or admin)
+      allow create: if isAuthenticated();
+      allow read: if isAdmin() || (isAuthenticated() && resource.data.email == request.auth.token.email);
+      allow update, delete: if isAdmin();
+    }
+
+    match /passwordAdminActions/{actionId} {
+      allow read, create: if isAdmin();
+      allow update, delete: if false;
+    }
+
+    match /remittance_reports/{reportId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin() || isRole('remittance-manager');
     }
   }
 }
