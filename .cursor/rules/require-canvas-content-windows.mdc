@@ -1,0 +1,21 @@
+---
+description: Require Canvas content windows for analytical and status deliverables in this project
+alwaysApply: true
+---
+
+# Required skill: canvas (content windows optimization)
+
+For this repository (`tax-app-krns`), agents **must** follow the project skill at [`.cursor/skills/canvas/SKILL.md`](.cursor/skills/canvas/SKILL.md).
+
+## Mandate
+
+When producing standalone analytical or multi-section deliverables (feature matrices, admin/security/architecture reviews, metrics tables, workflow summaries), **do not** dump large tables or long structured reports only in chat. Create or update a **Cursor Canvas** content window per the `canvas` skill so the user can open a focused side panel.
+
+## Before finishing such a response
+
+1. Read and follow `.cursor/skills/canvas/SKILL.md`
+2. Write a `.canvas.tsx` under the managed canvases directory
+3. Publish (cloud) or link the canvas file (local)
+4. Keep the chat reply short and point to the canvas
+
+Ordinary code changes, commits, and short answers do not require a canvas.
