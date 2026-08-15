@@ -1,5 +1,7 @@
 # Monthly Reconciliation - User Guide
 
+> IEC Taxation operator guide. Use live Firebase credentials (`demo.admin@iec-tax.test` for admin). Sample gate amounts below are illustrative.
+
 ## Overview
 
 The Monthly Reconciliation view provides a comprehensive interface for reviewing and approving monthly remittance reports from various tax collection gates. This feature enables Directors and Remittance Managers to verify financial data accuracy and request corrections when discrepancies are found.
@@ -408,16 +410,17 @@ Planned shortcuts:
 
 **For technical issues**:
 - Contact: IT Support
-- Email: support@taxadmin.gov
+- Email: itofficer@irt-iec.karennistategovernment.org
 - Phone: Internal ext. 1234
 
 **For process questions**:
 - Contact: Finance Director
-- Email: director@taxadmin.gov
+- Contact: IEC administration / IT officer
 - Refer to: Reconciliation Protocol Manual
 
 ---
 
-**Last Updated**: November 21, 2025  
-**Version**: 1.0  
+**Last updated:** 2026-08-15  
+**Version:** 1.0  
+**Product:** IEC Taxation
 **Feature Status**: Production Ready

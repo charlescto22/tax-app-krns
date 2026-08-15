@@ -1,12 +1,13 @@
 # Quick Start Guide
 
-## 🚀 Get Started in 5 Minutes
+Get started with **IEC Taxation** (Karenni State / IEC tax administration).
 
-This guide will help you quickly understand and start using the Tax Administration Dashboard.
+**Live:** https://tax-app-c410d.web.app  
+**Local:** `npm install` then `npm run dev`
 
 ---
 
-## 📖 Table of Contents
+## Table of Contents
 1. [Login](#1-login)
 2. [Dashboard Overview](#2-dashboard-overview)
 3. [Collect Taxes](#3-collect-taxes)
@@ -19,46 +20,27 @@ This guide will help you quickly understand and start using the Tax Administrati
 
 ## 1. Login
 
-### Step 1: Choose Your Role
+### Email / password (seeded admin)
 
-Pick one of the demo accounts based on your testing needs:
-
-**👑 Administrator** (Full Access)
 ```
-Email: admin@taxadmin.gov
-Password: Admin@123!
+Email:    demo.admin@iec-tax.test
+Password: DemoAdmin@123!
 ```
-- Access everything
-- Approve reconciliations
-- Manage users
 
-**📊 Remittance Manager** (Limited Admin)
-```
-Email: manager@taxadmin.gov
-Password: Manager@123!
-```
-- View collections (read-only)
-- Full access to remittance
-- View reconciliations
+- Full administrator access (dashboard, rates, users, approvals)
+- Other roles (remittance manager, tax collector) are created in **User Management** — legacy `@taxadmin.gov` demo emails do **not** work on live Firebase
 
-**💰 Tax Collector** (Operations)
-```
-Email: collector@taxadmin.gov
-Password: Collector@123!
-```
-- Collect taxes
-- Calculate taxes
-- Basic operations
+### Google / Workspace SSO
 
-### Step 2: Login
+1. Click **Continue with Google**
+2. You are redirected to Google to choose a Gmail or Google Workspace account
+3. New accounts wait for admin approval under **User Admin → SSO Approvals**
 
-1. Open the application
-2. See demo credentials banner (you can hide it)
-3. Enter email and password
-4. Click "Sign In"
-5. You're in! 🎉
+### Sign in
 
-**Security Note**: After 5 failed attempts, account locks for 15 minutes.
+1. Open the app
+2. Enter email and password, or use Google
+3. Click **Sign In** / complete Google redirect
 
 ---
 
@@ -211,26 +193,27 @@ From Tax Collection page, click "Calculate Tax" button to switch to calculator.
 
 ### Task: Add a New User (Admin Only)
 ```
-1. Sidebar → "User Management"
-2. Click "Add User"
-3. Fill in details:
-   - Name
-   - Email
-   - Role (Administrator/Manager/Collector)
-   - Password (must meet requirements)
-4. Click "Create User"
-5. User receives welcome email (in production)
+1. Sidebar → User Management → Users
+2. Create user (name, email, role, password)
+3. Optionally set max devices / enforcement
+4. For Google users: they sign in with Continue with Google,
+   then you approve under SSO Approvals
+```
+
+### Task: Approve Google SSO
+```
+1. Sidebar → User Management → SSO Approvals
+2. Review pending email / provider
+3. Approve with role (or reject)
+4. User signs in again with Google
 ```
 
 ### Task: Change Your Password
 ```
-1. Sidebar → "User Settings"
-2. Go to "Password" section
-3. Enter current password
-4. Enter new password (8+ chars, mixed case, number, special)
-5. Confirm new password
-6. Click "Change Password"
-7. Success! You'll need new password on next login
+1. Sidebar → User Settings (or Force Password Change gate)
+2. Enter current / temporary password
+3. Enter new password meeting strength rules
+4. Confirm and save
 ```
 
 ### Task: Export Collection Report
@@ -445,13 +428,11 @@ Month 1:
 
 ---
 
-**Welcome to the Tax Administration Dashboard!** 🎉
+**Welcome to IEC Taxation.**
 
-You're now ready to start using the system. If you have questions, refer to the detailed documentation or contact support.
+For auth and deploy status, see `docs/CHAT_HANDOFF.md`. For day-to-day ops questions, contact IEC IT (`itofficer@irt-iec.karennistategovernment.org`).
 
 ---
 
-**Version**: 1.0  
-**Last Updated**: November 21, 2025  
-**Difficulty**: ⭐⭐ (Beginner-Friendly)  
+**Last updated:** 2026-08-15 · Live: https://tax-app-c410d.web.app
 **Estimated Setup Time**: 5 minutes

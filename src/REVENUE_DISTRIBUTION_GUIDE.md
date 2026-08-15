@@ -1,6 +1,8 @@
 # Revenue Distribution & Split-Sheet - User Guide
 
-## 📊 Overview
+> IEC Taxation operator guide. Sign in with live Firebase accounts (see `src/QUICK_START_GUIDE.md`); sample amounts in this guide are illustrative.
+
+## Overview
 
 The Revenue Distribution & Split-Sheet feature is a specialized financial management tool designed for Central Treasurers and Director Generals to manage coalition revenue allocation and track payout execution. This feature enables transparent, auditable distribution of verified tax revenue among stakeholders.
 
@@ -665,7 +667,7 @@ Generated on: 11/21/2025 14:30:00
 1. Check this guide
 2. Review QUICK_START_GUIDE.md
 3. Contact immediate supervisor
-4. Email IT Support: support@taxadmin.gov
+4. Email IEC IT: itofficer@irt-iec.karennistategovernment.org
 5. Call Director: Internal ext. XXXX
 
 ---

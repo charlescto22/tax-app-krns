@@ -9,7 +9,8 @@
 | `FIREBASE_TOKEN` GitHub secret | Refreshed; CI deploys on `main` succeeding |
 | Deploy Firestore rules (`firestore:rules`) | Done via CI with hosting |
 | Seed demo admin profile | Done (`demo.admin@iec-tax.test`) |
-| Enable Google SSO | **Manual — still open** (Firebase Console) |
+| Enable Google sign-in provider | Done (provider responds; SSO redirect UX verified) |
+| Google SSO app flow | Done — `signInWithRedirect` + account chooser (PR #6) |
 
 ---
 
@@ -53,14 +54,27 @@ Creates/updates `users/{uid}` for:
 - Email: `demo.admin@iec-tax.test`
 - Password: `DemoAdmin@123!`
 - Role: `administrator`
+- UID (current): `9m0Z7ZK5vsfROUrVsO1ETiLPio53`
 
-## 3) Enable Google SSO (remaining)
+## 3) Google SSO (Console + app)
 
-Firebase Console (project **tax-app-c410d**):
+### Console checklist (already enabled for this project)
 
-1. Open [Authentication → Sign-in method](https://console.firebase.google.com/project/tax-app-c410d/authentication/providers)
-2. Enable **Google**
-3. Set support email
-4. Confirm authorized domains include `tax-app-c410d.web.app`, `tax-app-c410d.firebaseapp.com`, and `krns.tax.app`
+1. [Authentication → Sign-in method](https://console.firebase.google.com/project/tax-app-c410d/authentication/providers) → **Google** enabled
+2. Support email set
+3. Authorized domains include at least:
+   - `localhost`
+   - `tax-app-c410d.web.app`
+   - `tax-app-c410d.firebaseapp.com`
+   - `krns.tax.app`
+   - `karennistategovernment.org` (as configured)
 
-This cannot be completed from the agent without Console / Admin credentials.
+### App behavior
+
+- Login button **Continue with Google** uses Firebase **`signInWithRedirect`** (not popup) so the Gmail / Google Workspace account chooser works reliably.
+- New Google identities create an `ssoAccessRequests` doc; admins approve under **User Admin → SSO Approvals**.
+- A Google sign-in creates a **different Firebase UID** than email/password for the same address unless accounts are linked.
+
+### Optional: Cloud Functions
+
+Deploy `functions/` when privileged password set (`adminSetTemporaryPassword`) is required in production.

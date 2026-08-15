@@ -1,93 +1,54 @@
 # Comprehensive Testing Checklist
 
-## ✅ Complete System Verification Guide
+Thorough QA checklist for **IEC Taxation** (Firebase Auth + Firestore).
 
-This document provides a thorough testing checklist for all components, features, and responsiveness of the Tax Administration Dashboard.
-
----
-
-## 🔐 1. Authentication System
-
-### Login Page
-- [ ] **Load Test**
-  - Page loads without errors
-  - All elements visible (logo, form, demo credentials)
-  - No console errors
-
-- [ ] **Demo Credentials Banner**
-  - Visible on load
-  - Shows all 3 accounts correctly
-  - "Hide" button works
-  - Banner dismisses properly
-
-- [ ] **Email Field**
-  - Accepts valid email format
-  - Shows validation error for invalid format
-  - Sanitizes input (removes `<>`, `javascript:`)
-  - Autocomplete works (`autocomplete="email"`)
-  - Max length enforced (254 characters)
-
-- [ ] **Password Field**
-  - Accepts all characters
-  - Shows/hides with eye icon toggle
-  - Strength indicator updates in real-time
-  - All 5 criteria checked correctly
-  - Max length enforced (128 characters)
-  - Autocomplete works (`autocomplete="current-password"`)
-
-- [ ] **Remember Me**
-  - Checkbox toggles correctly
-  - Email saved to localStorage when checked
-  - Email pre-filled on next visit
-  - Password NOT saved (security check)
-
-- [ ] **Login Success - Admin**
-  - Email: admin@taxadmin.gov
-  - Password: Admin@123!
-  - Redirects to Dashboard
-  - Session created in sessionStorage
-  - User info displays in header
-
-- [ ] **Login Success - Manager**
-  - Email: manager@taxadmin.gov
-  - Password: Manager@123!
-  - Redirects to Tax Collection
-  - "View Only" badge visible
-  - Limited menu items shown
-
-- [ ] **Login Success - Collector**
-  - Email: collector@taxadmin.gov
-  - Password: Collector@123!
-  - Redirects to Tax Collection
-  - Only appropriate menu items visible
-  - Full access to collection features
-
-- [ ] **Failed Login**
-  - Wrong password shows error
-  - Remaining attempts counter decreases
-  - Error message is generic (no user enumeration)
-  - After 5 failures, account locks
-
-- [ ] **Account Lockout**
-  - Locked after 5 failed attempts
-  - Countdown timer displays correctly
-  - Lockout lasts 15 minutes
-  - Can't login during lockout
-  - Lockout clears after timer expires
-
-- [ ] **Loading States**
-  - Spinner appears during login
-  - Button disabled while processing
-  - Form fields disabled during processing
-
-- [ ] **Responsive Design**
-  - Desktop: Centered, proper sizing
-  - Tablet: Readable, no overflow
-  - Mobile: Full-width form, touch-friendly buttons
+**Live:** https://tax-app-c410d.web.app  
+**Seeded admin:** `demo.admin@iec-tax.test` / `DemoAdmin@123!`  
+Legacy `@taxadmin.gov` accounts do **not** work on production Firebase.
 
 ---
 
-## 🎯 2. Dashboard (Administrator Only)
+## 1. Authentication
+
+### Login page
+- [ ] Page loads (brand, form, Google button) without console errors
+- [ ] No obsolete “demo credentials banner” required
+- [ ] Email validation for empty/invalid formats
+- [ ] Password show/hide toggle
+- [ ] Password strength indicators update
+- [ ] Remember me saves email only
+- [ ] Forgot password sends reset for a known email
+
+### Email login — admin
+- [ ] `demo.admin@iec-tax.test` / `DemoAdmin@123!` succeeds
+- [ ] Lands on Dashboard with administrator navigation
+- [ ] Session survives refresh; logout returns to login
+
+### Email login — other roles
+- [ ] Users created in User Admin can sign in with their role
+- [ ] Menu items match RBAC (no User Management for non-admins)
+
+### Failed login
+- [ ] Wrong password shows generic error
+- [ ] Inactive user cannot enter
+
+### Google / Workspace SSO
+- [ ] **Continue with Google** redirects to Google (not a broken popup)
+- [ ] Can choose Gmail or Workspace account (or enter email)
+- [ ] New identity → pending / request message; cannot enter until approved
+- [ ] After admin approval → Google sign-in enters the app
+- [ ] Cancel on Google → friendly cancelled message
+
+### Devices & forced password
+- [ ] Device limit enforced when configured
+- [ ] Temporary password triggers force-change gate
+
+### Responsive login
+- [ ] Desktop / tablet / mobile usable
+
+---
+
+## 2. Dashboard (Administrator Only)
 
 ### Access Control
 - [ ] Administrator sees dashboard
@@ -438,44 +399,28 @@ This document provides a thorough testing checklist for all components, features
 
 ---
 
-## 👥 9. User Management (Administrator Only)
+## 9. User Management (Administrator Only)
 
-### Access Control
-- [ ] Only Administrator can access
-- [ ] Menu hidden for other roles
-- [ ] Access denied page for others
+### Access control
+- [ ] Only administrator can open User Management
+- [ ] Hidden / denied for other roles
 
-### User List
-- [ ] All users display
-- [ ] Role badges color-coded
-- [ ] Status indicators work
-- [ ] Search works
-- [ ] Filter by role works
+### Users tab
+- [ ] Users list loads from Firestore
+- [ ] Create user (email, role, password)
+- [ ] Activate / deactivate
+- [ ] Set max devices / enforcement
+- [ ] Password reset email / generate temporary password
+- [ ] Role badges and search/filter
 
-### Add User
-- [ ] "Add User" button works
-- [ ] Modal opens
-- [ ] All fields present
-- [ ] Email validation works
-- [ ] Role selection works
-- [ ] Password requirements shown
-- [ ] Submit creates user
-- [ ] Success message
+### Devices tab
+- [ ] Registered devices visible
+- [ ] Revoke device works
 
-### Edit User
-- [ ] Edit button on each row works
-- [ ] Modal pre-fills data
-- [ ] Can change role
-- [ ] Can activate/deactivate
-- [ ] Save button works
-- [ ] Changes persist
-
-### Delete User
-- [ ] Delete button works
-- [ ] Confirmation modal appears
-- [ ] Cancel works
-- [ ] Confirm deletes user
-- [ ] User removed from list
+### SSO Approvals tab
+- [ ] Pending Google requests listed
+- [ ] Approve links identity and grants role
+- [ ] Reject updates request status
 
 ---
 
@@ -790,5 +735,5 @@ This document provides a thorough testing checklist for all components, features
 ---
 
 **Document Version**: 1.0  
-**Last Updated**: November 21, 2025  
+**Last updated:** 2026-08-15 · Live: https://tax-app-c410d.web.app · Admin: `demo.admin@iec-tax.test`
 **System Version**: Production Ready
