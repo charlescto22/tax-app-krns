@@ -111,9 +111,11 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
       mustChangePassword: !!profile?.mustChangePassword,
     };
 
-    // Missing profile: allow first bootstrap only for known empty state, but do NOT auto-grant admin
+    // Bootstrap: missing Firestore profile → temporary administrator so first deploy can seed users.
+    // Prefer creating users/{uid} in Console or via an existing admin afterward.
     if (!profile) {
-      userData.role = "tax-collector";
+      console.warn("User document missing in Firestore; using administrator bootstrap role.");
+      userData.role = "administrator";
       userData.mustChangePassword = false;
     }
 
