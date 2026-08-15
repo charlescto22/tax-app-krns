@@ -428,13 +428,11 @@ Month 1:
 
 ---
 
-**Welcome to the Tax Administration Dashboard!** 🎉
+**Welcome to IEC Taxation.**
 
-You're now ready to start using the system. If you have questions, refer to the detailed documentation or contact support.
+For auth and deploy status, see `docs/CHAT_HANDOFF.md`. For day-to-day ops questions, contact IEC IT (`itofficer@irt-iec.karennistategovernment.org`).
 
 ---
 
-**Version**: 1.0  
 **Last updated:** 2026-08-15 · Live: https://tax-app-c410d.web.app
-**Difficulty**: ⭐⭐ (Beginner-Friendly)  
 **Estimated Setup Time**: 5 minutes

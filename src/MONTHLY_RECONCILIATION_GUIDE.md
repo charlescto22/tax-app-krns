@@ -420,6 +420,7 @@ Planned shortcuts:
 
 ---
 
-**Last Updated**: November 21, 2025  
-**Version**: 1.0  
+**Last updated:** 2026-08-15  
+**Version:** 1.0  
+**Product:** IEC Taxation
 **Feature Status**: Production Ready
