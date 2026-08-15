@@ -1,29 +1,30 @@
-# Tax Administration Dashboard - Feature Summary
+# IEC Taxation — Feature Summary
 
-## 🎯 Complete Feature Overview
+## System status: production (Firebase Hosting)
 
-### System Status: ✅ **PRODUCTION READY**
+**Live:** https://tax-app-c410d.web.app · **Project:** `tax-app-c410d`
 
 ---
 
-## 📊 Dashboard Components
+## Dashboard components
 
-### 1. **Login System** 🔐
-**Status**: ✅ Fully Functional | **Responsive**: ✅ Yes | **OWASP Compliant**: ✅ Yes
+### 1. Login
+**Status:** Functional · **Auth:** Firebase Auth · **Responsive:** Yes
 
-**Features**:
-- Secure authentication with 3 user roles
-- Password strength validation (8+ chars, uppercase, lowercase, number, special)
-- Account lockout after 5 failed attempts (15-min timeout)
-- Session management (15-min inactivity timeout)
-- Remember Me functionality
-- XSS and injection protection
-- Demo credentials banner
+**Features:**
+- Email/password via Firebase Auth + Firestore `users/{uid}` profile
+- Google / Google Workspace SSO via **`signInWithRedirect`** (account chooser)
+- New Google identities require admin approval (`ssoAccessRequests`)
+- Device registration / max-device enforcement
+- Forgot password (Firebase reset email)
+- Password strength indicator on the form
+- Remember Me (email only)
+- Force password change after admin-issued temporary passwords
 
-**Demo Accounts**:
-- Administrator: `admin@taxadmin.gov` / `Admin@123!`
-- Remittance Manager: `manager@taxadmin.gov` / `Manager@123!`
-- Tax Collector: `collector@taxadmin.gov` / `Collector@123!`
+**Working admin account:**
+- `demo.admin@iec-tax.test` / `DemoAdmin@123!`
+
+Legacy `@taxadmin.gov` demo accounts are obsolete and do not work against live Firebase.
 
 ---
 
@@ -199,19 +200,15 @@ Rejected → Submitted (After resubmission)
 
 ---
 
-### 9. **User Management** 👥
-**Access**: Administrator Only | **Status**: ✅ Complete
+### 9. User Management
+**Access:** Administrator only | **Status:** Complete (Unified User Admin)
 
-**Features**:
-- List all users
-- Add new user
-- Edit user details
-- Change user roles
-- Activate/deactivate users
-- Delete users (with confirmation)
-- Search and filter
-- Role-based badges
-- Status indicators
+**Tabs / features:**
+- **Users** — list, create, role, activate/deactivate, max devices, password reset / generate temporary password
+- **Devices** — view registered devices, revoke
+- **SSO Approvals** — approve/reject Google sign-in requests; link identity to app role
+- Search / filters and role badges
+- Super-admin hardcode note: `testadmin1@krns.tax.app` (UI privilege path)
 
 ---
 
@@ -226,35 +223,22 @@ Rejected → Submitted (After resubmission)
 
 ---
 
-## 🎨 Design System
+## Design system
 
-### Color Palette
-- **Primary**: Blue (#2563eb) - Primary actions, links
-- **Success**: Green (#16a34a) - Approvals, success messages
-- **Warning**: Yellow (#f59e0b) - Pending, caution
-- **Danger**: Red (#dc2626) - Rejections, errors, delete
-- **Info**: Purple (#9333ea) - Totals, highlights
+### Color palette (State Authority)
+- **Primary:** `#0A4D68` (deep cyan-navy) — primary actions
+- **Background:** `#EEF2F5` (cool mist)
+- **Seal accent:** `#C9A227` (gold, rare)
+- **Success / warning / danger:** existing green / amber / red utilities for status only
 
 ### Typography
-- **Font**: Inter (system default)
-- **Headings**: Bold, proper hierarchy
-- **Body**: Regular, readable line height
-- **No font size/weight classes** unless explicitly changed
+- **UI:** Source Sans 3 + Noto Sans Myanmar (EN/MY)
+- Do not introduce Inter / Roboto / Arial as the product face
 
-### Spacing
-- **Consistent**: 4px base unit (Tailwind spacing scale)
-- **Cards**: Proper padding and gaps
-- **Forms**: Logical field spacing
-- **Mobile**: Increased touch targets (44px minimum)
-
-### Components
-- **Buttons**: Primary, Secondary, Outline, Ghost variants
-- **Cards**: Elevated with borders
-- **Badges**: Color-coded status indicators
-- **Alerts**: Contextual messages
-- **Modals**: Centered dialogs
-- **Forms**: Clean, validated inputs
-- **Tables**: Responsive, converts to cards on mobile
+### Spacing & shell
+- Sticky header + fixed sidebar + `max-w-7xl` content
+- Prefer `PageHeader` and semantic tokens (`bg-primary`, etc.)
+- See `src/guidelines/Guidelines.md` and `src/styles/brand.css`
 
 ---
 
@@ -295,24 +279,22 @@ Rejected → Submitted (After resubmission)
 ✅ **A09**: Logging/Monitoring - Error logging ready  
 ✅ **A10**: SSRF - N/A frontend, prepared for backend  
 
-### Key Security Features
-- Password strength requirements
-- Account lockout (5 attempts, 15 min)
-- Session timeout (15 min inactivity)
-- Activity tracking
-- XSS prevention
-- Input sanitization
-- Role-based access control
-- Generic error messages (anti-enumeration)
-- Constant-time authentication responses
+### Key security features
+- Firebase Auth (email/password + Google SSO redirect)
+- Firestore security rules + RBAC roles
+- Device limits and revoke
+- SSO approval gate for new Google identities
+- Force password change for temporary passwords
+- Hosting CSP / security headers (`firebase.json`)
+- Remember Me stores email only
 
 ---
 
-## 🎯 Role-Based Access Matrix
+## Role-Based Access Matrix
 
 | Feature | Administrator | Remittance Manager | Tax Collector |
 |---------|--------------|-------------------|---------------|
-| **Dashboard** | ✅ Full | ❌ Denied | ❌ Denied |
+| **Dashboard** | Full | Denied | Denied |
 | **Tax Collection** | ✅ Full | 👁️ View Only | ✅ Full |
 | **Tax Calculation** | ✅ Full | ✅ Full | ✅ Full |
 | **Tax Rate Management** | ✅ Full | ❌ Denied | ❌ Denied |
@@ -456,9 +438,6 @@ Rejected → Submitted (After resubmission)
 
 ---
 
-**System Version**: 1.0  
-**Last Updated**: November 21, 2025  
-**Status**: ✅ Production Ready  
-**Total Features**: 10 Major Modules  
-**Total Components**: 50+ React Components  
-**Code Quality**: Enterprise-Grade
+**System:** IEC Taxation (`tax-app-krns`)  
+**Last updated:** 2026-08-15  
+**Auth / deploy status:** see `docs/CHAT_HANDOFF.md` and `scripts/PRODUCTION_BOOTSTRAP.md`
